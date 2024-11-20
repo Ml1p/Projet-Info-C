@@ -1,3 +1,4 @@
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -44,32 +45,11 @@ int main(void) {
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
   struct jeu verifier_collision(struct jeu);
-  void sauvegarde_partie(struct jeu, int);
-  struct jeu charge_partie(int);
-
-  sauvegarde_partie(p);
-  struct jeu p2;
-  p2=charge_partie();
-
-
-  for(int i=0;i<HAUTEUR;i++){
-        for(int j=0;j<LARGEUR;j++){
-          if(p2.grille[j][i]==0)
-            printf(" \t");
-          else
-          printf("%d\t",p2.grille[j][i]);
-        }
-        printf("\n");
-      }
-  
-  /*for(int x=0;x<LARGEUR;x++)
-    printf("%d\t",p2.grille[x][HAUTEUR-1]);
-  
-  printf("\n%d",p2.score);
-  printf("\n%d\n",p2.taille);*/
+  void sauvegarde_partie(struct jeu);
+  struct jeu charge_partie();
 
   int i=0;
-  while(i<0) {
+  while(i<9999) {
       
       int r=rand()%2;
       if(r==0)
@@ -235,7 +215,7 @@ struct jeu verifier_collision(struct jeu j) {
 }
 
 
-/*
+
 void sauvegarde_partie(struct jeu j){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
@@ -285,64 +265,32 @@ struct jeu charge_partie(){
 }
 */
 
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
 
-void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
+struct termios ancien_param;
 
-  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
-
-  // Enregistre la grille sur la première ligne
-
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++)
-      fprintf(fichier_sauvegarde,"%d\t",j.grille[x][y]);
-
-  // Enregistre le score à la suite sur la même ligne
-
-  fprintf(fichier_sauvegarde,"%d\t",j.score);
-
-  // Enregistre la taille du radeau après le score
-
-  fprintf(fichier_sauvegarde,"%d",j.taille);
-
-  fclose(fichier_sauvegarde);
+void restaurer_terminal() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &ancien_param);
 }
 
-struct jeu charge_partie(int numero_sauvegarde){
-
-  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
-  struct jeu j;
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3+1;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau + 1 pour \n
-  char buffer[taille_ligne];
-  
-  // Se déplace dans le fichier à la ligne de la sauvegarde à charger
-
-  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde,SEEK_SET);
-  
-  // Charge la grille
-
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++){
-      
-      fgets(buffer,2,fichier_sauvegarde);
-
-      sscanf(buffer,"%d",&j.grille[x][y]);
-      fseek(fichier_sauvegarde,1,SEEK_CUR); // Décale la lecture sur la ligne
-    }
-
-  // Charge le score
-
-  fseek(fichier_sauvegarde,1,SEEK_CUR);
-  fgets(buffer,7,fichier_sauvegarde);
-  sscanf(buffer,"%d",&j.score);
-
-  // Charge la taille du radeau
-
-  fseek(fichier_sauvegarde,7,SEEK_CUR);
-  fgets(buffer,3,fichier_sauvegarde);
-  sscanf(buffer,"%d",&j.taille);
-
-  fclose(fichier_sauvegarde);
-
-  return j;
+// Configuration du terminal pour lire les entrées sans appuyer sur Entrée
+void config_terminal() {
+    struct termios nouveau_param;
+    
+    // Sauvegarde de la configuration actuelle du terminal
+    tcgetattr(STDIN_FILENO, &ancien_param);
+    nouveau_param = ancien_param;
+    nouveau_param.c_lflag &= ~(ICANON | ECHO); // Désactiver le mode canonique et l'affichage
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &nouveau_param);
+    
+    // Rendre l'entrée non bloquante
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    
+    // Rétablissement automatique de la configuration à la sortie
+    atexit(restaurer_terminal);
 }
+
 
