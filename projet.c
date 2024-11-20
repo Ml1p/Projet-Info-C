@@ -1,4 +1,5 @@
-/*
+#include <termios.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -8,8 +9,8 @@
 #define N 10
 #define EPS 1.e-8
 
-#define LARGEUR 15
-#define HAUTEUR 20
+#define LARGEUR 10
+#define HAUTEUR 30
 
 struct jeu {
   int grille[LARGEUR][HAUTEUR];
@@ -47,35 +48,33 @@ int main(void) {
   struct jeu verifier_collision(struct jeu);
   void sauvegarde_partie(struct jeu);
   struct jeu charge_partie();
+  void config_terminal();
+  
+  config_terminal();
+  
 
   int i=0;
+  char touche;
   while(i<9999) {
-      
-      int r=rand()%2;
-      if(r==0)
-          p=déplacer('a',p);
-      if(r==1)
-          p=déplacer('d',p);
-
+  
+  if(read(STDIN_FILENO, &touche,1) == 1) 
+  	p=déplacer(touche,p);
+  	
+  	
+  	
       p=mise_a_jour_objets(p);
 
       p=verifier_collision(p);
       
       affiche_jeu(p);
       i++;
-      printf("Score : %d\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",p.score);
-      usleep(1e4);
-      printf("\n\n\n\n\n\n\n\n\n\n");
+      printf("Score : %d\n\n\n\n\n\n\n\n",p.score);
+      usleep(2e5);
   }
 } 
 
 
 void affiche_jeu(struct jeu j){
-
-  printf("\t");
-  for(int i=0;i<LARGEUR+2;i++)
-    printf("%d\t",i);
-  printf("\n");
 
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
@@ -101,7 +100,7 @@ void affiche_jeu(struct jeu j){
       }
       
     // Affiche le bord droit de la grille
-    printf("*\t%d\n",y);
+    printf("*\t\n");
     }
     
   // Affiche le bas de la grille
@@ -136,6 +135,7 @@ struct jeu déplacer(char direction, struct jeu j){
           break;
         }
     }
+    return j;
   }
 
   if(direction=='d'){
@@ -161,9 +161,8 @@ struct jeu déplacer(char direction, struct jeu j){
           break;
         }
     }
+    return j;
   }
-
-  return j;
 }
 
 struct jeu mise_a_jour_objets(struct jeu j) {
@@ -263,11 +262,9 @@ struct jeu charge_partie(){
 
   return j;
 }
-*/
 
-#include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
+
+
 
 struct termios ancien_param;
 
@@ -292,5 +289,6 @@ void config_terminal() {
     // Rétablissement automatique de la configuration à la sortie
     atexit(restaurer_terminal);
 }
+
 
 
