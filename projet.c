@@ -293,7 +293,7 @@ struct jeu charge_partie(int numero_sauvegarde){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
   struct jeu j;
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3+1;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau + 1 pour \n
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
   char buffer[16];
   
   // Se déplace dans le fichier à la ligne de la sauvegarde à charger
@@ -312,7 +312,6 @@ struct jeu charge_partie(int numero_sauvegarde){
       fseek(fichier_sauvegarde,1,SEEK_CUR); // Décale la lecture sur la ligne
     }
 
-  printf("%d",ftell(sauvegarde_partie));
   // Charge le score
 
   fgets(buffer,7,fichier_sauvegarde);
@@ -323,6 +322,10 @@ struct jeu charge_partie(int numero_sauvegarde){
   fseek(fichier_sauvegarde,1,SEEK_CUR);
   fgets(buffer,3,fichier_sauvegarde);
   sscanf(buffer,"%d",&j.taille);
+
+  fseek(fichier_sauvegarde,1,SEEK_CUR);
+  printf("%d - %d\t%s\n",taille_ligne,ftell(fichier_sauvegarde),buffer);
+  fgets(buffer, 16,fichier_sauvegarde);
 
   fclose(fichier_sauvegarde);
 
