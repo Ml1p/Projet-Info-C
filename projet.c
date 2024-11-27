@@ -224,7 +224,7 @@ struct jeu verifier_collision(struct jeu j) {
 }
 
 
-
+/*
 void sauvegarde_partie(struct jeu j){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
@@ -244,33 +244,6 @@ void sauvegarde_partie(struct jeu j){
   fprintf(fichier_sauvegarde,"%d",j.taille);
 
   fclose(fichier_sauvegarde);
-}
-
-struct jeu charge_partie(){
-
-  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
-  struct jeu j;
-
-  // Charge la grille
-
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++){
-      
-      fscanf(fichier_sauvegarde,"%d",&j.grille[x][y]);
-
-    }
-
-  // Charge le score
-  
-  fscanf(fichier_sauvegarde,"%d",&j.score);
-
-  // Charge la taille du radeau
-
-  fscanf(fichier_sauvegarde,"%d",&j.taille);
-
-  fclose(fichier_sauvegarde);
-
-  return j;
 }
 */
 
