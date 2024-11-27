@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
-#include<math.h>
 #define N 10
 #define EPS 1.e-8
 
@@ -45,8 +44,10 @@ int main(void) {
   srand(time(NULL));
   struct jeu init_jeu();
   struct jeu p = init_jeu();
+  int menu=0;
+  int pause=0;
 
-  void affiche_jeu(struct jeu);
+  void affiche_jeu(struct jeu,int);
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
   struct jeu verifier_collision(struct jeu);
@@ -61,63 +62,108 @@ int main(void) {
   char touche;
   while(p.score>-50) {
   
-	if(read(STDIN_FILENO, &touche,1) == 1) 
-		p=déplacer(touche,p);
-  	
-  	
-      	if(i==10){ // Fait descendre les objets toutes les 10 images
-      		// Permet de séparer le nombre d'images par secondes et la difficulté
-      	
-		p=mise_a_jour_objets(p);
-		p=verifier_collision(p);
-		i=0;
-	
-	}
+	if(read(STDIN_FILENO, &touche,1) == 1){
+		
+    if(menu==0 && pause==0)
+      p=déplacer(touche,p);
 
-	affiche_jeu(p);
-	printf("Score : %d\n\n\n\n\n\n\n\n",p.score);
-	usleep(1e4);
-	i++;
+    if(pause==1 && touche=='a' || touche=='d')
+      pause=0;
+
+    if(touche=='m'){
+
+      menu=1;
+      pause=1;
+    }
+  }
+  
+  if(menu==1){
+    
+    if(read(STDIN_FILENO, &touche,1) == 1){
+      
+      if(touche=='s')
+        sauvegarde_partie(p);
+      
+      if(touche=='c')
+        p=charge_partie();
+
+      if(touche=='m')
+        menu=0;
+      
+      if(touche=='q')
+        p.score=-200;
+      
+      if(touche=='r')
+        init_jeu(p);
+    }
+
+    affiche_menu(p);
+
+  }
+
+  if(menu==0 && pause==0){
+
+    if(i==10){ // Fait descendre les objets toutes les 10 images
+              // Permet de séparer le nombre d'images par secondes et la difficulté
+          
+      p=mise_a_jour_objets(p);
+      p=verifier_collision(p);
+      i=0;
+    
+    }
+  }
+
+  if(menu==0)
+    affiche_jeu(p,pause);
+  
+  usleep(1e4);
+  i++;
   }
 } 
 
 
-void affiche_jeu(struct jeu j){
+void affiche_jeu(struct jeu j,int jeu_en_pause){
 
   system("clear");
 
+  if(jeu_en_pause==1)
+    printf("Appuyez sur a ou d pour Continuer\n\n\n");
+
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
-    printf("*\t");
+    printf("*  ");
     
   printf("\n");
   for(int y=0;y<HAUTEUR;y++) {
   
     // Affiche le bord gauche de la grille
-    printf("*\t");
+    printf("*  ");
 
     // Affiche une ligne de la grille
     for(int x=0;x<LARGEUR;x++){
 
       if (j.grille[x][y] == 0)
-        printf(" \t");
+        printf("   ");
 
       if (j.grille[x][y] == 1)
-        printf("0\t");
+        printf("0  ");
 
       if (j.grille[x][y] == 2)
-        printf("-\t");
+        printf("-  ");
       }
       
     // Affiche le bord droit de la grille
-    printf("*\t\n");
+    printf("*  \n");
     }
     
   // Affiche le bas de la grille
   for(int i=0;i<LARGEUR+2;i++)
-    printf("*\t");
+    printf("*  ");
 
   printf("\n");
+
+  printf("Score : %d\n\n\n\n\n\n\n\n",j.score);
+
   return;
 }
 
@@ -222,7 +268,6 @@ struct jeu verifier_collision(struct jeu j) {
 
   return j;
 }
-
 
 /*
 void sauvegarde_partie(struct jeu j){
