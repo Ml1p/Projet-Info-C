@@ -1,3 +1,8 @@
+// Bénard Clément
+// Abancourt-Bevilacqua Titouan
+
+#include <termios.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -8,8 +13,8 @@
 #define N 10
 #define EPS 1.e-8
 
-#define LARGEUR 15
-#define HAUTEUR 20
+#define LARGEUR 10
+#define HAUTEUR 30
 
 struct jeu {
   int grille[LARGEUR][HAUTEUR];
@@ -45,46 +50,41 @@ int main(void) {
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
   struct jeu verifier_collision(struct jeu);
-  void sauvegarde_partie(struct jeu, int);
-  struct jeu charge_partie(int);
-
-  struct jeu p2;
-  init_jeu(p2);
-  for(int x=0;x<LARGEUR;x++)
-    for(int y=0;y<HAUTEUR;y++)
-      p2.grille[x][y]=3;
-  p2.score=-300;
-  p2.taille=34;
-  sauvegarde_partie(p2,0);
+  void sauvegarde_partie(struct jeu);
+  struct jeu charge_partie();
+  void config_terminal();
+  
+  config_terminal();
+  
 
   int i=0;
-  while(i<0) {
-      
-      int r=rand()%2;
-      if(r==0)
-          p=déplacer('a',p);
-      if(r==1)
-          p=déplacer('d',p);
+  char touche;
+  while(p.score>-50) {
+  
+	if(read(STDIN_FILENO, &touche,1) == 1) 
+		p=déplacer(touche,p);
+  	
+  	
+      	if(i==10){ // Fait descendre les objets toutes les 10 images
+      		// Permet de séparer le nombre d'images par secondes et la difficulté
+      	
+		p=mise_a_jour_objets(p);
+		p=verifier_collision(p);
+		i=0;
+	
+	}
 
-      p=mise_a_jour_objets(p);
-
-      p=verifier_collision(p);
-      
-      affiche_jeu(p);
-      i++;
-      printf("Score : %d\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",p.score);
-      usleep(1e4);
-      printf("\n\n\n\n\n\n\n\n\n\n");
+	affiche_jeu(p);
+	printf("Score : %d\n\n\n\n\n\n\n\n",p.score);
+	usleep(1e4);
+	i++;
   }
 } 
 
 
 void affiche_jeu(struct jeu j){
 
-  printf("\t");
-  for(int i=0;i<LARGEUR+2;i++)
-    printf("%d\t",i);
-  printf("\n");
+  system("clear");
 
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
@@ -110,7 +110,7 @@ void affiche_jeu(struct jeu j){
       }
       
     // Affiche le bord droit de la grille
-    printf("*\t%d\n",y);
+    printf("*\t\n");
     }
     
   // Affiche le bas de la grille
@@ -145,6 +145,7 @@ struct jeu déplacer(char direction, struct jeu j){
           break;
         }
     }
+    return j;
   }
 
   if(direction=='d'){
@@ -170,9 +171,8 @@ struct jeu déplacer(char direction, struct jeu j){
           break;
         }
     }
+    return j;
   }
-
-  return j;
 }
 
 struct jeu mise_a_jour_objets(struct jeu j) {
@@ -224,7 +224,7 @@ struct jeu verifier_collision(struct jeu j) {
 }
 
 
-/*
+
 void sauvegarde_partie(struct jeu j){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
@@ -399,4 +399,6 @@ struct jeu charge_partie(int numero_sauvegarde){
 
   return j;
 }
+
+
 
