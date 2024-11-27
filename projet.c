@@ -248,7 +248,7 @@ void sauvegarde_partie(struct jeu j){
 */
 
 
-void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
+/*void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
   int taille_ligne=LARGEUR*HAUTEUR*2+7+2+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
 
@@ -332,8 +332,8 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
   fprintf(fichier_sauvegarde,"%d",j.taille);
 
-  fclose(fichier_sauvegarde);*/
-}
+  fclose(fichier_sauvegarde);
+}*/
 
 struct jeu charge_partie(int numero_sauvegarde){
 
