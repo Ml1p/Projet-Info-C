@@ -48,6 +48,7 @@ int main(void) {
   int pause=0;
 
   void affiche_jeu(struct jeu,int);
+  void affiche_menu(struct jeu);
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
   struct jeu verifier_collision(struct jeu);
@@ -269,7 +270,7 @@ struct jeu verifier_collision(struct jeu j) {
   return j;
 }
 
-/*
+
 void sauvegarde_partie(struct jeu j){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
@@ -290,7 +291,7 @@ void sauvegarde_partie(struct jeu j){
 
   fclose(fichier_sauvegarde);
 }
-*/
+
 
 
 /*void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
@@ -432,5 +433,26 @@ void affiche_menu(struct jeu j) {
 	
 }
 
+struct termios ancien_param;
 
+void restaurer_terminal() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &ancien_param);
+}
 
+// Configuration du terminal pour lire les entrées sans appuyer sur Entrée
+void config_terminal() {
+    struct termios nouveau_param;
+    
+    // Sauvegarde de la configuration actuelle du terminal
+    tcgetattr(STDIN_FILENO, &ancien_param);
+    nouveau_param = ancien_param;
+    nouveau_param.c_lflag &= ~(ICANON | ECHO); // Désactiver le mode canonique et l'affichage
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &nouveau_param);
+    
+    // Rendre l'entrée non bloquante
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    
+    // Rétablissement automatique de la configuration à la sortie
+    atexit(restaurer_terminal);
+}
