@@ -1,15 +1,19 @@
+// Bénard Clément
+// Abancourt-Bevilacqua Titouan
+
+#include <termios.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
-#include<math.h>
 #define N 10
 #define EPS 1.e-8
 
-#define LARGEUR 15
-#define HAUTEUR 20
+#define LARGEUR 10
+#define HAUTEUR 30
 
 struct jeu {
   int grille[LARGEUR][HAUTEUR];
@@ -45,46 +49,41 @@ int main(void) {
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
   struct jeu verifier_collision(struct jeu);
-  void sauvegarde_partie(struct jeu, int);
-  struct jeu charge_partie(int);
-
-  struct jeu p2;
-  init_jeu(p2);
-  for(int x=0;x<LARGEUR;x++)
-    for(int y=0;y<HAUTEUR;y++)
-      p2.grille[x][y]=3;
-  p2.score=-300;
-  p2.taille=34;
-  sauvegarde_partie(p2,0);
+  void sauvegarde_partie(struct jeu);
+  struct jeu charge_partie();
+  void config_terminal();
+  
+  config_terminal();
+  
 
   int i=0;
-  while(i<0) {
-      
-      int r=rand()%2;
-      if(r==0)
-          p=déplacer('a',p);
-      if(r==1)
-          p=déplacer('d',p);
+  char touche;
+  while(p.score>-50) {
+  
+	if(read(STDIN_FILENO, &touche,1) == 1) 
+		p=déplacer(touche,p);
+  	
+  	
+      	if(i==10){ // Fait descendre les objets toutes les 10 images
+      		// Permet de séparer le nombre d'images par secondes et la difficulté
+      	
+		p=mise_a_jour_objets(p);
+		p=verifier_collision(p);
+		i=0;
+	
+	}
 
-      p=mise_a_jour_objets(p);
-
-      p=verifier_collision(p);
-      
-      affiche_jeu(p);
-      i++;
-      printf("Score : %d\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",p.score);
-      usleep(1e4);
-      printf("\n\n\n\n\n\n\n\n\n\n");
+	affiche_jeu(p);
+	printf("Score : %d\n\n\n\n\n\n\n\n",p.score);
+	usleep(1e4);
+	i++;
   }
 } 
 
 
 void affiche_jeu(struct jeu j){
 
-  printf("\t");
-  for(int i=0;i<LARGEUR+2;i++)
-    printf("%d\t",i);
-  printf("\n");
+  system("clear");
 
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
@@ -110,7 +109,7 @@ void affiche_jeu(struct jeu j){
       }
       
     // Affiche le bord droit de la grille
-    printf("*\t%d\n",y);
+    printf("*\t\n");
     }
     
   // Affiche le bas de la grille
@@ -145,6 +144,7 @@ struct jeu déplacer(char direction, struct jeu j){
           break;
         }
     }
+    return j;
   }
 
   if(direction=='d'){
@@ -170,9 +170,8 @@ struct jeu déplacer(char direction, struct jeu j){
           break;
         }
     }
+    return j;
   }
-
-  return j;
 }
 
 struct jeu mise_a_jour_objets(struct jeu j) {
@@ -224,7 +223,7 @@ struct jeu verifier_collision(struct jeu j) {
 }
 
 
-/*
+
 void sauvegarde_partie(struct jeu j){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
@@ -272,130 +271,30 @@ struct jeu charge_partie(){
 
   return j;
 }
-*/
-
-
-void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
-
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
-
-  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
-
-  fseek(fichier_sauvegarde,0,SEEK_END); // Va à la fin du fichier pour connaitre le nombre de charactères dans le fichier
-  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne; // Nombre de Charactères / Nombre de charactères dans une ligne = Nombre de lignes
-  fseek(fichier_sauvegarde,0,SEEK_SET); // Retourne au début du fichier
-
-
-  // Stoppe la sauvegarde si le numéro de sauvegarde est trop grand
-
-  if(numero_sauvegarde>nb_lignes_fichier+1)
-    return;
-
-
-  // Enregistre l'entièreté du fichier
-
-  char contenu_fichier[nb_lignes_fichier][taille_ligne];
-
-  for(int i=0; i<nb_lignes_fichier;i++){
-    
-    fgets(contenu_fichier[i],taille_ligne,fichier_sauvegarde);
-    fseek(fichier_sauvegarde,0,SEEK_CUR);
-  }
-
-
-  // Modifie la ligne de la sauvegarde
-
-  if(numero_sauvegarde<=nb_lignes_fichier){
-
-    for(int y=0;y<HAUTEUR;y++)
-      for(int x=0;x<LARGEUR;x++){
-
-        contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2]=j.grille[x][y]+'0'; // + '0' Convertis l'int en char
-        contenu_fichier[numero_sauvegarde][x*2+1+y*LARGEUR*2]='\t';
-      }
-
-    char buffer[6]="000000";
-
-    if(j.score<0){
-
-      buffer[5]='-';
-      j.score=-j.score;
-    }
-    for(int i=0;i<6;i++){
-
-      buffer[5-i]=j.score%(int)(1000000/pow(10,i))+'0';
-      printf("Puissance 10 : %d\tCoeff score : %d\tBuffer : %s\n",(int)(100000/pow(10,i)),(int)(j.score/(100000/pow(10,i))),buffer);
-    }
-    
-    printf("%s\n",buffer);
-
-
-    for(int i=0;i<6;i++){
-
-      contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+i]=buffer[i];
-    }
-
-    printf("%s\n",contenu_fichier[numero_sauvegarde]);
-
-    contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+7]='\t';
 
 
 
-  }
 
-  /*fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
+struct termios ancien_param;
 
-  // Enregistre la grille sur la première ligne
-
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++)
-      fprintf(fichier_sauvegarde,"%d\t",j.grille[x][y]);
-
-  // Enregistre le score à la suite sur la même ligne
-
-  fprintf(fichier_sauvegarde,"%d\t",j.score);
-
-  // Enregistre la taille du radeau après le score
-
-  fprintf(fichier_sauvegarde,"%d",j.taille);
-
-  fclose(fichier_sauvegarde);*/
+void restaurer_terminal() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &ancien_param);
 }
 
-struct jeu charge_partie(int numero_sauvegarde){
-
-  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
-  struct jeu j;
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
-  char buffer[16];
-
-  // Se déplace dans le fichier à la ligne de la sauvegarde à charger
-
-  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde,SEEK_SET);
-
-  // Charge la grille
-
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++){
-      
-      fgets(buffer,2,fichier_sauvegarde);
-
-      sscanf(buffer,"%d",&j.grille[x][y]);
-      fseek(fichier_sauvegarde,1,SEEK_CUR); // Décale la lecture sur la ligne
-    }
-
-  // Charge le score
-
-  fgets(buffer,7,fichier_sauvegarde);
-  sscanf(buffer,"%d",&j.score);
-
-  // Charge la taille du radeau
-
-  fseek(fichier_sauvegarde,1,SEEK_CUR);
-  fgets(buffer,3,fichier_sauvegarde);
-  sscanf(buffer,"%d",&j.taille);
-
-  fclose(fichier_sauvegarde);
-
-  return j;
+// Configuration du terminal pour lire les entrées sans appuyer sur Entrée
+void config_terminal() {
+    struct termios nouveau_param;
+    
+    // Sauvegarde de la configuration actuelle du terminal
+    tcgetattr(STDIN_FILENO, &ancien_param);
+    nouveau_param = ancien_param;
+    nouveau_param.c_lflag &= ~(ICANON | ECHO); // Désactiver le mode canonique et l'affichage
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &nouveau_param);
+    
+    // Rendre l'entrée non bloquante
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    
+    // Rétablissement automatique de la configuration à la sortie
+    atexit(restaurer_terminal);
 }
