@@ -378,7 +378,7 @@ struct jeu charge_partie(int numero_sauvegarde){
 void affiche_menu(struct jeu j) {
 	//printf("MEILLEUR SCORE :("%d\n\n\n") :)",p.meilleur_score);
 	printf("jeu en pause !\n\n\n");
-	printf("score : (%d\n)",p.score);
+	printf("score : (%d\n)",j.score);
 	printf("m: reprendre la partie\n");
 	printf("s: sauvegarder la partie\n");
 	printf("c: charger la partie\n");
