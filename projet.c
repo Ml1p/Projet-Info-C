@@ -373,5 +373,19 @@ struct jeu charge_partie(int numero_sauvegarde){
   return j;
 }
 
+// affichage du menu
+
+void affiche_menu(struct jeu j) {
+	//printf("MEILLEUR SCORE :("%d\n\n\n") :)",p.meilleur_score);
+	printf("jeu en pause !\n\n\n");
+	printf("score : ("%d\n")",p.score);
+	printf("m: reprendre la partie\n");
+	printf("s: sauvegarder la partie\n");
+	printf("c: charger la partie\n");
+	printf("r: recommencer une partie\n");
+	printf("q: quitter le jeu\n");
+	
+}
+
 
 
