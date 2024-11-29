@@ -117,10 +117,10 @@ int main(void) {
       if(read(STDIN_FILENO, &touche,1) == 1){
       
         if(touche=='s')
-          sauvegarde_partie(p);
+          sauvegarde_partie(p,0);
         
         if(touche=='c')
-          p=charge_partie();
+          p=charge_partie(0);
 
         if(touche=='m')
           mode=1;
