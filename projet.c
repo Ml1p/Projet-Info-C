@@ -44,8 +44,8 @@ int main(void) {
   srand(time(NULL));
   struct jeu init_jeu();
   struct jeu p = init_jeu();
-  int menu=0;
-  int pause=0;
+  int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
+  int gameOver=0;
 
   void affiche_jeu(struct jeu,int);
   void affiche_menu(struct jeu);
@@ -61,62 +61,82 @@ int main(void) {
 
   int i=0;
   char touche;
-  while(p.score>-50) {
+  while(p.score>-50 && gameOver!=1) {
   
-	if(read(STDIN_FILENO, &touche,1) == 1){
-		
-    if(menu==0 && pause==0)
-      p=déplacer(touche,p);
+    switch (mode){
+    case 0: // En mode jeu
+      
+      if(read(STDIN_FILENO, &touche,1) == 1){
+        
+        p=déplacer(touche,p);
 
-    if(pause==1 && touche=='a' || touche=='d')
-      pause=0;
+        if(touche=='m'){ // Change le mode au menu
 
-    if(touche=='m'){
+          mode=2;
+          continue;
+        }
+      }
 
-      menu=1;
-      pause=1;
-    }
-  }
-  
-  if(menu==1){
+      // Fait descendre les objets toutes les 10 images
+      // Permet de séparer le nombre d'images par secondes et la difficulté
+      if(i==10){ 
+        
+        p=mise_a_jour_objets(p);
+        p=verifier_collision(p);
+        i=0;
+      }
+
+      affiche_jeu(p,mode);
+      printf("i %d",i);
+      break;
     
-    if(read(STDIN_FILENO, &touche,1) == 1){
-      
-      if(touche=='s')
-        sauvegarde_partie(p);
-      
-      if(touche=='c')
-        p=charge_partie();
+    case 1: // En mode Pause
 
-      if(touche=='m')
-        menu=0;
-      
-      if(touche=='q')
-        p.score=-200;
-      
-      if(touche=='r')
-        init_jeu(p);
-    }
-
-    affiche_menu(p);
-
-  }
-
-  if(menu==0 && pause==0){
-
-    if(i==10){ // Fait descendre les objets toutes les 10 images
-              // Permet de séparer le nombre d'images par secondes et la difficulté
+      if(read(STDIN_FILENO, &touche,1) == 1){
+    
+        if(touche=='m'){
           
-      p=mise_a_jour_objets(p);
-      p=verifier_collision(p);
-      i=0;
-    
-    }
-  }
+          mode=2;
+          continue;
+        }
 
-  if(menu==0)
-    affiche_jeu(p,pause);
-  
+        if(touche=='a' || touche=='d'){
+          
+          p=déplacer(touche,p);
+          mode=0;
+          i=0;
+          continue;
+        }
+      }
+
+      affiche_jeu(p,mode);
+      break;
+
+    case 2: // En mode Menu
+      
+      if(read(STDIN_FILENO, &touche,1) == 1){
+      
+        if(touche=='s')
+          sauvegarde_partie(p);
+        
+        if(touche=='c')
+          p=charge_partie();
+
+        if(touche=='m')
+          mode=1;
+        
+        if(touche=='q')
+          gameOver=1;
+        
+        if(touche=='r')
+          init_jeu(p);
+      }
+
+      affiche_menu(p);
+      break;
+
+    }
+
   usleep(1e4);
   i++;
   }
