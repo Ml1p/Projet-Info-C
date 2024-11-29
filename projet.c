@@ -384,6 +384,70 @@ void sauvegarde_partie(struct jeu j){
 
   /*fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
 
+  fseek(fichier_sauvegarde,0,SEEK_END); // Va à la fin du fichier pour connaitre le nombre de charactères dans le fichier
+  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne; // Nombre de Charactères / Nombre de charactères dans une ligne = Nombre de lignes
+  fseek(fichier_sauvegarde,0,SEEK_SET); // Retourne au début du fichier
+
+
+  // Stoppe la sauvegarde si le numéro de sauvegarde est trop grand
+
+  if(numero_sauvegarde>nb_lignes_fichier+1)
+    return;
+
+
+  // Enregistre l'entièreté du fichier
+
+  char contenu_fichier[nb_lignes_fichier][taille_ligne];
+
+  for(int i=0; i<nb_lignes_fichier;i++){
+    
+    fgets(contenu_fichier[i],taille_ligne,fichier_sauvegarde);
+    fseek(fichier_sauvegarde,0,SEEK_CUR);
+  }
+
+
+  // Modifie la ligne de la sauvegarde
+
+  if(numero_sauvegarde<=nb_lignes_fichier){
+
+    for(int y=0;y<HAUTEUR;y++)
+      for(int x=0;x<LARGEUR;x++){
+
+        contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2]=j.grille[x][y]+'0'; // + '0' Convertis l'int en char
+        contenu_fichier[numero_sauvegarde][x*2+1+y*LARGEUR*2]='\t';
+      }
+
+    char buffer[6]="000000";
+
+    if(j.score<0){
+
+      buffer[5]='-';
+      j.score=-j.score;
+    }
+    for(int i=0;i<6;i++){
+
+      buffer[5-i]=j.score%(int)(1000000/pow(10,i))+'0';
+      printf("Puissance 10 : %d\tCoeff score : %d\tBuffer : %s\n",(int)(100000/pow(10,i)),(int)(j.score/(100000/pow(10,i))),buffer);
+    }
+    
+    printf("%s\n",buffer);
+
+
+    for(int i=0;i<6;i++){
+
+      contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+i]=buffer[i];
+    }
+
+    printf("%s\n",contenu_fichier[numero_sauvegarde]);
+
+    contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+7]='\t';
+
+
+
+  }
+
+  /*fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
+
   // Enregistre la grille sur la première ligne
 
   for(int y=0;y<HAUTEUR;y++)
