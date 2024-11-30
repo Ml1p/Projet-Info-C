@@ -45,19 +45,20 @@ int main(void) {
   struct jeu init_jeu();
   struct jeu p = init_jeu();
   int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
-  int gameOver=0;
+  int gameOver=1;
 
   void affiche_jeu(struct jeu,int);
   void affiche_menu(struct jeu);
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
   struct jeu verifier_collision(struct jeu);
-  void sauvegarde_partie(struct jeu);
-  struct jeu charge_partie();
+  void sauvegarde_partie(struct jeu, int);
+  struct jeu charge_partie(int);
   void config_terminal();
   
   config_terminal();
   
+  sauvegarde_partie(p,5);
 
   int i=0;
   char touche;
@@ -116,10 +117,10 @@ int main(void) {
       if(read(STDIN_FILENO, &touche,1) == 1){
       
         if(touche=='s')
-          sauvegarde_partie(p);
+          sauvegarde_partie(p,0);
         
         if(touche=='c')
-          p=charge_partie();
+          p=charge_partie(0);
 
         if(touche=='m')
           mode=1;
@@ -290,29 +291,92 @@ struct jeu verifier_collision(struct jeu j) {
 }
 
 
-void sauvegarde_partie(struct jeu j){
+void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
-  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
 
-  // Enregistre la grille sur la première ligne
+  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
 
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++)
-      fprintf(fichier_sauvegarde,"%d\t",j.grille[x][y]);
+  fseek(fichier_sauvegarde,0,SEEK_END); // Va à la fin du fichier pour connaitre le nombre de charactères dans le fichier
+  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne; // Nombre de Charactères / Nombre de charactères dans une ligne = Nombre de lignes
+  fseek(fichier_sauvegarde,0,SEEK_SET); // Retourne au début du fichier
 
-  // Enregistre le score à la suite sur la même ligne
 
-  fprintf(fichier_sauvegarde,"%d\t",j.score);
+  // Stoppe la sauvegarde si le numéro de sauvegarde est trop grand
 
-  // Enregistre la taille du radeau après le score
+  if(numero_sauvegarde>nb_lignes_fichier+1)
+    return;
 
-  fprintf(fichier_sauvegarde,"%d",j.taille);
 
+  // Enregistre l'entièreté du fichier
+
+  char buffer[taille_ligne+1];
+  char contenu_fichier[nb_lignes_fichier][taille_ligne+1];
+
+  for(int i=0; i<nb_lignes_fichier;i++){
+    
+    fgets(buffer,taille_ligne+1,fichier_sauvegarde);
+    fseek(fichier_sauvegarde,0,SEEK_CUR);
+
+    for(int j=0;j<taille_ligne+1;j++)
+      contenu_fichier[i][j]=buffer[j];
+  }
+
+
+  // Modifie la ligne de la sauvegarde
+
+  if(numero_sauvegarde<=nb_lignes_fichier){
+
+    // Ecrit la grille dans le buffer
+    for(int y=0;y<HAUTEUR;y++)
+      for(int x=0;x<LARGEUR;x++){
+
+        buffer[x*2+y*LARGEUR*2]=j.grille[x][y]+'0';
+        buffer[x*2+y*LARGEUR*2+1]='\t';
+      }
+    
+
+    // Formate le score (000000)
+    char temp_buffer[7];
+    snprintf(temp_buffer,7,"%06d",j.score);
+
+    // Ecrit le score dans le buffer
+    for(int i=0;i<6;i++){
+      
+      buffer[HAUTEUR*LARGEUR*2+i]=temp_buffer[i];
+    }
+    buffer[HAUTEUR*LARGEUR*2+6]='\t';
+
+    // Formate la taille du radeau (00)
+    snprintf(temp_buffer,3,"%02d",j.taille);
+
+    // Ecrit la taille du radeau dans le buffer
+    for(int i=0;i<2;i++)
+      buffer[HAUTEUR*LARGEUR*2+7+i]=temp_buffer[i];
+    
+    buffer[HAUTEUR*LARGEUR*2+9]='\n';
+
+
+    // Copie le buffer dans le fichier enregistré
+
+    for(int i=0;i<taille_ligne+1;i++)
+      contenu_fichier[numero_sauvegarde][i]=buffer[i];
+  }
+
+
+  // Réécrit le fichier modifié dans le fichier sauvegarde
+
+  fclose(fichier_sauvegarde);
+  fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
+
+  for(int i=0;i<nb_lignes_fichier+1;i++){
+
+    fputs(contenu_fichier[i],fichier_sauvegarde);
+  }
   fclose(fichier_sauvegarde);
 }
 
-
-struct jeu charge_partie(){
+struct jeu charge_partie(int numero_sauvegarde){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
   struct jeu j;
@@ -321,7 +385,7 @@ struct jeu charge_partie(){
 
   // Se déplace dans le fichier à la ligne de la sauvegarde à charger
 
-  fseek(fichier_sauvegarde,0,SEEK_SET);
+  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde,SEEK_SET);
 
   // Charge la grille
 
