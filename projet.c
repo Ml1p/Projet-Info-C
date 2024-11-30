@@ -87,7 +87,6 @@ int main(void) {
       }
 
       affiche_jeu(p,mode);
-      printf("i %d",i);
       break;
     
     case 1: // En mode Pause
