@@ -45,7 +45,7 @@ int main(void) {
   struct jeu init_jeu();
   struct jeu p = init_jeu();
   int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
-  int gameOver=0;
+  int gameOver=1;
 
   void affiche_jeu(struct jeu,int);
   void affiche_menu(struct jeu);
@@ -58,6 +58,7 @@ int main(void) {
   
   config_terminal();
   
+  sauvegarde_partie(p,5);
 
   int i=0;
   char touche;
@@ -293,7 +294,7 @@ struct jeu verifier_collision(struct jeu j) {
 
 void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
 
@@ -310,27 +311,61 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
   // Enregistre l'entièreté du fichier
 
-  char contenu_fichier[nb_lignes_fichier][taille_ligne];
+  char buffer[taille_ligne+1];
+  char contenu_fichier[nb_lignes_fichier][taille_ligne+1];
 
   for(int i=0; i<nb_lignes_fichier;i++){
     
-    fgets(contenu_fichier[i],taille_ligne,fichier_sauvegarde);
+    fgets(buffer,taille_ligne+1,fichier_sauvegarde);
     fseek(fichier_sauvegarde,0,SEEK_CUR);
+
+    for(int j=0;j<taille_ligne+1;j++)
+      contenu_fichier[i][j]=buffer[j];
   }
 
 
   // Modifie la ligne de la sauvegarde
 
   if(numero_sauvegarde<=nb_lignes_fichier){
+    
+    for(int i=0;i<taille_ligne;i++){
+      buffer[i]='9';
+    }
 
     for(int y=0;y<HAUTEUR;y++)
       for(int x=0;x<LARGEUR;x++){
 
-        contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2]=j.grille[x][y]+'0'; // + '0' Convertis l'int en char
-        contenu_fichier[numero_sauvegarde][x*2+1+y*LARGEUR*2]='\t';
+        buffer[x*2+y*LARGEUR*2]='3';
+        buffer[x*2+y*LARGEUR*2+1]='\t';
+        
+        //contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2]='3'; // + '0' Convertis l'int en char
+        //contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2+1]='\t';
       }
 
-    char buffer[6]="000000";
+    printf("Début|%s|Fin\n",buffer);
+    
+
+    char temp_buffer[7];
+    snprintf(temp_buffer,7,"%06d",-34);
+
+    for(int i=0;i<6;i++){
+      
+      buffer[HAUTEUR*LARGEUR*2+i]=temp_buffer[i];
+
+      //contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+i]=buffer[i];
+    }
+    buffer[HAUTEUR*LARGEUR*2+6]='\t';
+
+    printf("Debut|%s|Fin\n",buffer);
+
+
+    
+
+    for(int i=0;i<3;i++)
+      buffer[HAUTEUR*LARGEUR*2+7+i]=temp_buffer[i]
+  }
+      
+    /*
 
     if(j.score<0){
 
@@ -357,7 +392,12 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
 
 
-  }
+  }*/
+
+  fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
+
+  for(int i=0;i<nb_lignes_fichier;i++)
+    fputs(contenu_fichier[i],fichier_sauvegarde);
 }
 
   /*fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
