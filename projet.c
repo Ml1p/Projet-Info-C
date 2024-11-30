@@ -291,7 +291,6 @@ struct jeu verifier_collision(struct jeu j) {
   return j;
 }
 
-
 void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
   int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
