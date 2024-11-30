@@ -327,97 +327,55 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
   // Modifie la ligne de la sauvegarde
 
   if(numero_sauvegarde<=nb_lignes_fichier){
-    
-    for(int i=0;i<taille_ligne;i++){
-      buffer[i]='9';
-    }
 
+    // Ecrit la grille dans le buffer
     for(int y=0;y<HAUTEUR;y++)
       for(int x=0;x<LARGEUR;x++){
 
-        buffer[x*2+y*LARGEUR*2]='3';
+        buffer[x*2+y*LARGEUR*2]=j.grille[x][y]+'0';
         buffer[x*2+y*LARGEUR*2+1]='\t';
-        
-        //contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2]='3'; // + '0' Convertis l'int en char
-        //contenu_fichier[numero_sauvegarde][x*2+y*LARGEUR*2+1]='\t';
       }
-
-    printf("Début|%s|Fin\n",buffer);
     
 
+    // Formate le score (000000)
     char temp_buffer[7];
-    snprintf(temp_buffer,7,"%06d",-34);
+    snprintf(temp_buffer,7,"%06d",j.score);
 
+    // Ecrit le score dans le buffer
     for(int i=0;i<6;i++){
       
       buffer[HAUTEUR*LARGEUR*2+i]=temp_buffer[i];
-
-      //contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+i]=buffer[i];
     }
     buffer[HAUTEUR*LARGEUR*2+6]='\t';
 
-    printf("Debut|%s|Fin\n",buffer);
+    // Formate la taille du radeau (00)
+    snprintf(temp_buffer,3,"%02d",j.taille);
 
-
+    // Ecrit la taille du radeau dans le buffer
+    for(int i=0;i<2;i++)
+      buffer[HAUTEUR*LARGEUR*2+7+i]=temp_buffer[i];
     
+    buffer[HAUTEUR*LARGEUR*2+9]='\n';
 
-    for(int i=0;i<3;i++)
-      buffer[HAUTEUR*LARGEUR*2+7+i]=temp_buffer[i]
+
+    // Copie le buffer dans le fichier enregistré
+
+    for(int i=0;i<taille_ligne+1;i++)
+      contenu_fichier[numero_sauvegarde][i]=buffer[i];
   }
-      
-    /*
-
-    if(j.score<0){
-
-      buffer[5]='-';
-      j.score=-j.score;
-    }
-    for(int i=0;i<6;i++){
-
-      buffer[5-i]=j.score%(int)(1000000/pow(10,i))+'0';
-      printf("Puissance 10 : %d\tCoeff score : %d\tBuffer : %s\n",(int)(100000/pow(10,i)),(int)(j.score/(100000/pow(10,i))),buffer);
-    }
-    
-    printf("%s\n",buffer);
 
 
-    for(int i=0;i<6;i++){
-
-      contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+i]=buffer[i];
-    }
-
-    printf("%s\n",contenu_fichier[numero_sauvegarde]);
-
-    contenu_fichier[numero_sauvegarde][HAUTEUR*LARGEUR*2+7]='\t';
-
-
-
-  }*/
-
-  fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
-
-  for(int i=0;i<nb_lignes_fichier;i++)
-    fputs(contenu_fichier[i],fichier_sauvegarde);
-}
-
-  /*fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
-
-  // Enregistre la grille sur la première ligne
-
-  for(int y=0;y<HAUTEUR;y++)
-    for(int x=0;x<LARGEUR;x++)
-      fprintf(fichier_sauvegarde,"%d\t",j.grille[x][y]);
-
-  // Enregistre le score à la suite sur la même ligne
-
-  fprintf(fichier_sauvegarde,"%d\t",j.score);
-
-  // Enregistre la taille du radeau après le score
-
-  fprintf(fichier_sauvegarde,"%d",j.taille);
+  // Réécrit le fichier modifié dans le fichier sauvegarde
 
   fclose(fichier_sauvegarde);
-}*/
+  fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
+
+  for(int i=0;i<nb_lignes_fichier+1;i++){
+
+    fputs(contenu_fichier[i],fichier_sauvegarde);
+  }
+  fclose(fichier_sauvegarde);
+}
 
 struct jeu charge_partie(int numero_sauvegarde){
 
