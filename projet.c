@@ -15,6 +15,11 @@
 #define LARGEUR 10
 #define HAUTEUR 30
 
+// Code flèche gauche 91 68
+// Code Flèche droite 91 67
+// Code flèche haut   91 65
+// Code Flèche bas    91 66
+
 struct jeu {
   int grille[LARGEUR][HAUTEUR];
   int score;
@@ -40,8 +45,6 @@ int main(void) {
   srand(time(NULL));
   struct jeu init_jeu();
   struct jeu p = init_jeu();
-  int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
-  int gameOver=0;
 
   void affiche_jeu(struct jeu,int);
   void affiche_menu(struct jeu);
@@ -51,9 +54,14 @@ int main(void) {
   void sauvegarde_partie(struct jeu, int);
   struct jeu charge_partie(int);
   void config_terminal();
+  void affiche_menu_sauvegarde(int);
   
   config_terminal();
 
+  int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
+  int gameOver=0;
+  int sequence_touche[2]={0,0};
+  int selection=0;
   int i=0;
   char touche;
   while(p.score>-50 && gameOver!=1) {
@@ -134,9 +142,56 @@ int main(void) {
     
     case 3: // En mode Sauvegarde
 
+      // Détermine le nombre de lignes dans le fichier sauvegarde
 
+      FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
+      int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;
+
+      fseek(fichier_sauvegarde,0,SEEK_END);
+      int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne;
+      fseek(fichier_sauvegarde,0,SEEK_SET);
+  
+      fclose(fichier_sauvegarde);
+
+      // Fait monter le curseur de sélection de sauvegarde et le rammène en haut si on est sur la dernière sauvegarde
+      if(sequence_touche[0]==91 && sequence_touche[1]==65 && selection>=0){
+        
+        if(selection>0)
+          selection--;
+        
+        else
+          selection=nb_lignes_fichier;
+      }
+      
+      // Analogue pour la montée
+      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=nb_lignes_fichier){
+        
+        if(selection<nb_lignes_fichier)
+          selection++;
+        
+        else
+          selection=0;
+      }
+        
+      
+      // Sauvegarde le jeu à l'emplacement sélectionné
+      if(read(STDIN_FILENO, &touche,1)==1){
+        if(touche=='\n' || touche=='f'){
+          
+          sauvegarde_partie(p,selection);
+          mode=2;
+        }
+
+        if(touche=='m' || touche=='s')
+          mode=2;
+      }
+
+      affiche_menu_sauvegarde(selection);
+      break;
     }
 
+  sequence_touche[0]=sequence_touche[1];
+  sequence_touche[1]=getchar();
   usleep(1e4);
   i++;
   }
@@ -449,6 +504,56 @@ void affiche_menu(struct jeu j) {
 	printf("q: quitter le jeu\n");
 	
 }
+
+void affiche_menu_sauvegarde(int numero_sauvegarde){
+
+  system("clear");
+
+  // Détermine le nombre de sauvegardes
+
+  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;
+
+  fseek(fichier_sauvegarde,0,SEEK_END);
+  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne;
+  fseek(fichier_sauvegarde,0,SEEK_SET);
+  
+  fclose(fichier_sauvegarde);
+
+
+  for(int i=0;i<nb_lignes_fichier;i++){
+    
+    // Indique la sauvegarde sélectionnée
+    if(i==numero_sauvegarde)
+      printf("*  ");
+    
+    printf("Sauvegarde %d",i+1);
+
+    if(i==numero_sauvegarde)
+      printf("  *");
+    
+    printf("\n");
+  }
+
+  // Affiche la nouvelle sauvegarde en dernière
+
+  if(numero_sauvegarde==nb_lignes_fichier)
+    printf("*  ");
+  
+  printf("Nouvelle Sauvegarde");
+
+  if(numero_sauvegarde==nb_lignes_fichier)
+    printf("  *");
+
+
+  // Affiche le score et la taille du radeau de la sauvegarde séléctionnée
+
+  if(numero_sauvegarde<nb_lignes_fichier){
+    struct jeu sauvegarde=charge_partie(numero_sauvegarde);
+    printf("\n\nScore: %d\nTaille du radeau: %d",numero_sauvegarde,sauvegarde.score,sauvegarde.taille);
+  }
+}
+
 
 struct termios ancien_param;
 
