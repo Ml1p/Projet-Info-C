@@ -54,11 +54,11 @@ int main(void) {
   void sauvegarde_partie(struct jeu, int);
   struct jeu charge_partie(int);
   void config_terminal();
-  void affiche_menu_sauvegarde(int);
+  void affiche_menu_sauvegardes(int,int);
   
   config_terminal();
 
-  int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
+  int mode=0; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
   int gameOver=0;
   int sequence_touche[2]={0,0};
   int selection=0;
@@ -114,7 +114,7 @@ int main(void) {
       affiche_jeu(p,mode);
       break;
 
-    case 2: // En mode Menu
+    case 2: // Menu
       
       if(read(STDIN_FILENO, &touche,1) == 1){
       
@@ -122,7 +122,7 @@ int main(void) {
           mode=3;
         
         if(touche=='c')
-          p=charge_partie(0);
+          mode=4;
 
         if(touche=='m')
           mode=1;
@@ -140,7 +140,7 @@ int main(void) {
       affiche_menu(p);
       break;
     
-    case 3: // En mode Sauvegarde
+    case 3: // Sélection Sauvegarde
 
       // Détermine le nombre de lignes dans le fichier sauvegarde
 
@@ -186,7 +186,54 @@ int main(void) {
           mode=2;
       }
 
-      affiche_menu_sauvegarde(selection);
+      affiche_menu_sauvegardes(selection,1);
+      break;
+
+
+    case 4: // Sélection Chargement (Analogue à la sélection de la sauvegarde)
+
+      fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
+      taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;
+
+      fseek(fichier_sauvegarde,0,SEEK_END);
+      nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne;
+      fseek(fichier_sauvegarde,0,SEEK_SET);
+  
+      fclose(fichier_sauvegarde);
+
+      // Montée et Descente
+      if(sequence_touche[0]==91 && sequence_touche[1]==65 && selection>=0){
+        
+        if(selection>0)
+          selection--;
+        
+        else
+          selection=nb_lignes_fichier-1;
+      }
+      
+      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=nb_lignes_fichier-1){
+        
+        if(selection<nb_lignes_fichier-1)
+          selection++;
+        
+        else
+          selection=0;
+      }
+        
+      
+      // Charge le jeu à l'emplacement sélectionné
+      if(read(STDIN_FILENO, &touche,1)==1){
+        if(touche=='\n' || touche=='f'){
+          
+          p=charge_partie(selection);
+          mode=2;
+        }
+
+        if(touche=='m' || touche=='c')
+          mode=2;
+      }
+
+      affiche_menu_sauvegardes(selection,0);
       break;
     }
 
@@ -344,7 +391,6 @@ struct jeu verifier_collision(struct jeu j) {
 
   return j;
 }
-
 
 void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
@@ -505,7 +551,7 @@ void affiche_menu(struct jeu j) {
 	
 }
 
-void affiche_menu_sauvegarde(int numero_sauvegarde){
+void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
 
   system("clear");
 
@@ -536,14 +582,15 @@ void affiche_menu_sauvegarde(int numero_sauvegarde){
   }
 
   // Affiche la nouvelle sauvegarde en dernière
+  if(mode_sauvegarde==1){
+    if(numero_sauvegarde==nb_lignes_fichier)
+      printf("*  ");
+    
+    printf("Nouvelle Sauvegarde");
 
-  if(numero_sauvegarde==nb_lignes_fichier)
-    printf("*  ");
-  
-  printf("Nouvelle Sauvegarde");
-
-  if(numero_sauvegarde==nb_lignes_fichier)
-    printf("  *");
+    if(numero_sauvegarde==nb_lignes_fichier)
+      printf("  *");
+  }
 
 
   // Affiche le score et la taille du radeau de la sauvegarde séléctionnée
