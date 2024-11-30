@@ -29,10 +29,6 @@ struct jeu init_jeu(){
     for(int x=0;x<LARGEUR;x++)
       p.grille[x][y]=0;
 
-  p.grille[2][4]=1;
-  p.grille [3][5]=1;
-  p.grille[0][10]=1;
-
   for(int x=0; x<p.taille*2+1;x++){
     p.grille[LARGEUR/2-p.taille+x][HAUTEUR-1]=2;
   }
@@ -45,7 +41,7 @@ int main(void) {
   struct jeu init_jeu();
   struct jeu p = init_jeu();
   int mode=0; // 0 Jeu en cours, 1 Menu, 2 Jeu en Pause
-  int gameOver=1;
+  int gameOver=0;
 
   void affiche_jeu(struct jeu,int);
   void affiche_menu(struct jeu);
@@ -57,8 +53,6 @@ int main(void) {
   void config_terminal();
   
   config_terminal();
-  
-  sauvegarde_partie(p,5);
 
   int i=0;
   char touche;
@@ -117,7 +111,7 @@ int main(void) {
       if(read(STDIN_FILENO, &touche,1) == 1){
       
         if(touche=='s')
-          sauvegarde_partie(p,0);
+          mode=3;
         
         if(touche=='c')
           p=charge_partie(0);
@@ -128,12 +122,18 @@ int main(void) {
         if(touche=='q')
           gameOver=1;
         
-        if(touche=='r')
-          init_jeu(p);
+        if(touche=='r'){
+          p=init_jeu();
+          mode=0;
+          i=0;
+        }
       }
 
       affiche_menu(p);
       break;
+    
+    case 3: // En mode Sauvegarde
+
 
     }
 
@@ -293,7 +293,7 @@ struct jeu verifier_collision(struct jeu j) {
 
 void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
 
@@ -417,9 +417,30 @@ struct jeu charge_partie(int numero_sauvegarde){
 // affichage du menu
 
 void affiche_menu(struct jeu j) {
-	system("clear");
-  //printf("MEILLEUR SCORE :("%d\n\n\n") :)",p.meilleur_score);
+	
+  system("clear");
+
+
+  // Détermine le nombre de sauvegardes
+
+  FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+2+1;
+
+  fseek(fichier_sauvegarde,0,SEEK_END);
+  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne;
+  fseek(fichier_sauvegarde,0,SEEK_SET);
+  
+  fclose(fichier_sauvegarde);
+
+  int meilleur_score=0;
+  for(int i=0;i<nb_lignes_fichier;i++)
+
+    if(charge_partie(i).score>meilleur_score)
+
+      meilleur_score=charge_partie(i).score;
+
 	printf("jeu en pause !\n\n\n");
+  printf("MEILLEUR SCORE : (%d)\n\n",meilleur_score);
 	printf("score : (%d)\n",j.score);
 	printf("m: reprendre la partie\n");
 	printf("s: sauvegarder la partie\n");
