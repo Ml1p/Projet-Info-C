@@ -69,7 +69,7 @@ int main(void) {
     switch (mode){
     case 0: // En mode jeu
       
-      if(read(STDIN_FILENO, &touche,1) == 1){
+      if(read(STDIN_FILENO,&touche,1) == 1){
         
         p=déplacer(touche,p);
 
@@ -79,6 +79,15 @@ int main(void) {
           continue;
         }
       }
+
+      // Permet de déplacer le radeau avec les flèches directionnelles
+
+      if(sequence_touche[0]==91 && sequence_touche[1]==68)
+        p=déplacer('a',p);
+      
+      if(sequence_touche[0]==91 && sequence_touche[1]==67)
+        p=déplacer('d',p);
+
 
       // Fait descendre les objets toutes les 10 images
       // Permet de séparer le nombre d'images par secondes et la difficulté
@@ -94,7 +103,7 @@ int main(void) {
     
     case 1: // En mode Pause
 
-      if(read(STDIN_FILENO, &touche,1) == 1){
+      if(read(STDIN_FILENO,&touche,1) == 1){
     
         if(touche=='m'){
           
@@ -116,7 +125,7 @@ int main(void) {
 
     case 2: // Menu
       
-      if(read(STDIN_FILENO, &touche,1) == 1){
+      if(read(STDIN_FILENO,&touche,1) == 1){
       
         if(touche=='s')
           mode=3;
@@ -175,7 +184,7 @@ int main(void) {
         
       
       // Sauvegarde le jeu à l'emplacement sélectionné
-      if(read(STDIN_FILENO, &touche,1)==1){
+      if(read(STDIN_FILENO,&touche,1)==1){
         if(touche=='\n' || touche=='f'){
           
           sauvegarde_partie(p,selection);
@@ -222,7 +231,7 @@ int main(void) {
         
       
       // Charge le jeu à l'emplacement sélectionné
-      if(read(STDIN_FILENO, &touche,1)==1){
+      if(read(STDIN_FILENO,&touche,1)==1){
         if(touche=='\n' || touche=='f'){
           
           p=charge_partie(selection);
