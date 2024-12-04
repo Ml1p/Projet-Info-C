@@ -513,7 +513,6 @@ struct jeu charge_partie(int numero_sauvegarde){
   // Charge le score
 
   fgets(buffer,7,fichier_sauvegarde);
-  printf("%s",buffer);
   sscanf(buffer,"%d",&j.score);
 
   // Charge la taille du radeau
