@@ -24,12 +24,14 @@ struct jeu {
   int grille[LARGEUR][HAUTEUR];
   int score;
   int taille;
+  int position_radeau;
 };
 
 struct jeu init_jeu(){
   struct jeu p;
   p.score=0;
   p.taille=2;
+  p.position_radeau=LARGEUR/2-p.taille;
   for(int y=0;y<HAUTEUR;y++)
     for(int x=0;x<LARGEUR;x++)
       p.grille[x][y]=0;
@@ -59,9 +61,8 @@ int main(void) {
   config_terminal();
 
 
-
   int mode=0; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
-  int gameOver=0;
+  int gameOver=1;
   int sequence_touche[2]={0,0};
   int selection=0;
   int i=0;
@@ -405,12 +406,12 @@ struct jeu verifier_collision(struct jeu j) {
 
 void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+3+4;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau + Position Radeau
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
 
   fseek(fichier_sauvegarde,0,SEEK_END); // Va à la fin du fichier pour connaitre le nombre de charactères dans le fichier
-  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne; // Nombre de Charactères / Nombre de charactères dans une ligne = Nombre de lignes
+  int nb_lignes_fichier=ftell(fichier_sauvegarde)/taille_ligne+1; // Nombre de Charactères / Nombre de charactères dans une ligne +1 (Ligne vide)= Nombre de lignes
   fseek(fichier_sauvegarde,0,SEEK_SET); // Retourne au début du fichier
 
 
@@ -466,9 +467,14 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
     for(int i=0;i<2;i++)
       buffer[HAUTEUR*LARGEUR*2+7+i]=temp_buffer[i];
     
-    buffer[HAUTEUR*LARGEUR*2+9]='\n';
+    buffer[HAUTEUR*LARGEUR*2+9]='\t';
 
+    // Formate la position du radeau
+    snprintf(temp_buffer,3,"%02d",j.position_radeau);
 
+    for(int i=0;i<2;i++)
+      buffer[HAUTEUR*LARGEUR*2+10+i]=temp_buffer[i];
+    
     // Copie le buffer dans le fichier enregistré
 
     for(int i=0;i<taille_ligne+1;i++)
@@ -481,7 +487,7 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
   fclose(fichier_sauvegarde);
   fichier_sauvegarde=fopen("fichier_sauvegarde.txt","w");
 
-  for(int i=0;i<nb_lignes_fichier+1;i++){
+  for(int i=0;i<nb_lignes_fichier;i++){
 
     fputs(contenu_fichier[i],fichier_sauvegarde);
   }
@@ -492,12 +498,13 @@ struct jeu charge_partie(int numero_sauvegarde){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
   struct jeu j;
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
+  int taille_ligne=LARGEUR*HAUTEUR*2+7+3+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
   char buffer[16];
 
   // Se déplace dans le fichier à la ligne de la sauvegarde à charger
 
-  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde,SEEK_SET);
+  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde+1,SEEK_SET);
+  fgets(buffer,2,fichier_sauvegarde);
 
   // Charge la grille
 
@@ -520,6 +527,12 @@ struct jeu charge_partie(int numero_sauvegarde){
   fseek(fichier_sauvegarde,1,SEEK_CUR);
   fgets(buffer,3,fichier_sauvegarde);
   sscanf(buffer,"%d",&j.taille);
+
+  // Charge la position du radeau
+
+  fseek(fichier_sauvegarde,0,SEEK_CUR);
+  fgets(buffer,3,fichier_sauvegarde);
+  sscanf(buffer,"%d",&j.position_radeau);
 
   fclose(fichier_sauvegarde);
 
