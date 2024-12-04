@@ -146,6 +146,8 @@ int main(void) {
           mode=0;
           i=0;
         }
+        if(touche=='j')
+        	mode=5;
       }
 
       affiche_menu(p);
@@ -246,6 +248,11 @@ int main(void) {
 
       affiche_menu_sauvegardes(selection,0);
       break;
+      
+     case 5:
+     system("clear");
+     printf("Bienvenue dans le meilleur jeu que cette UE vous proposera, Le principe est simple, récolter le plus d'objets possible à l'aide de votre radeau (1 objet récolté= +1 point, 1 objet perdu = -1 point). Mais gare aux bombes (Q) ! En toucher une fera exploser une partie de votre radeau, créant un trou béant... Des malus et des bonus seront aussi attrapables. Un + recolté aggrandira la taille de votre radeau alors qu'un - le rétrécira. Attention à ne pas atteindre un score de -50 ou ce sera GAME OVER. Bon jeu à toi jeune pirate. De nouvelles mises à jour seront prochainement disposibles ! n'hésites pas à aider au bon développement du jeu en faisant un don à l'adresse Paypal suivante : benarclem@gmail.com ; Merci !");
+     break;
     }
 
   sequence_touche[0]=sequence_touche[1];
@@ -449,12 +456,14 @@ struct jeu verifier_collision(struct jeu j) {
 
 	j.score++;
 	j.taille++;
+	j.grille[x][HAUTEUR-1]=0;
 	}
 
     if(j.grille[x][HAUTEUR-1]==7) {
 
 	j.score--;
 	j.taille--;
+	j.grille[x][HAUTEUR-1]=0;
 	}
 	
 	    
@@ -619,6 +628,7 @@ void affiche_menu(struct jeu j) {
 	printf("c: charger la partie\n");
 	printf("r: recommencer une partie\n");
 	printf("q: quitter le jeu\n");
+	printf("j: règle");
 	
 }
 
@@ -696,4 +706,5 @@ void config_terminal() {
     // Rétablissement automatique de la configuration à la sortie
     atexit(restaurer_terminal);
 }
+
 
