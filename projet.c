@@ -58,6 +58,8 @@ int main(void) {
   
   config_terminal();
 
+
+
   int mode=0; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
   int gameOver=0;
   int sequence_touche[2]={0,0};
@@ -111,7 +113,7 @@ int main(void) {
           continue;
         }
 
-        if(touche=='a' || touche=='d'){
+        if(touche=='a' || touche=='d' || sequence_touche[0]==91 && sequence_touche[1]==68 || sequence_touche[0]==91 && sequence_touche[1]==67){
           
           p=déplacer(touche,p);
           mode=0;
@@ -511,6 +513,7 @@ struct jeu charge_partie(int numero_sauvegarde){
   // Charge le score
 
   fgets(buffer,7,fichier_sauvegarde);
+  printf("%s",buffer);
   sscanf(buffer,"%d",&j.score);
 
   // Charge la taille du radeau
@@ -606,7 +609,7 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
 
   if(numero_sauvegarde<nb_lignes_fichier){
     struct jeu sauvegarde=charge_partie(numero_sauvegarde);
-    printf("\n\nScore: %d\nTaille du radeau: %d",numero_sauvegarde,sauvegarde.score,sauvegarde.taille);
+    printf("\n\nScore: %d\nTaille du radeau: %d",sauvegarde.score,sauvegarde.taille);
   }
 }
 
