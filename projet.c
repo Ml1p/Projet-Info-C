@@ -37,7 +37,7 @@ struct jeu init_jeu(){
       p.grille[x][y]=0;
 
   for(int x=0; x<p.taille*2+1;x++){
-    p.grille[LARGEUR/2-p.taille+x][HAUTEUR-1]=2;
+    p.grille[LARGEUR/2-p.taille+x][HAUTEUR-1]=30;
   }
   return p;
 }
@@ -60,9 +60,8 @@ int main(void) {
   
   config_terminal();
 
-
   int mode=0; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
-  int gameOver=1;
+  int gameOver=0;
   int sequence_touche[2]={0,0};
   int selection=0;
   int i=0;
@@ -277,14 +276,16 @@ void affiche_jeu(struct jeu j,int jeu_en_pause){
     // Affiche une ligne de la grille
     for(int x=0;x<LARGEUR;x++){
 
-      if (j.grille[x][y] == 0)
+      if ((int)j.grille[x][y]/10==3){
+        printf("-  ");
+        continue;
+      }
+
+      if (j.grille[x][y]%10==0)
         printf("   ");
 
-      if (j.grille[x][y] == 1)
+      if (j.grille[x][y]%10==1)
         printf("0  ");
-
-      if (j.grille[x][y] == 2)
-        printf("-  ");
       }
       
     // Affiche le bord droit de la grille
@@ -304,54 +305,33 @@ void affiche_jeu(struct jeu j,int jeu_en_pause){
 
 struct jeu déplacer(char direction, struct jeu j){
 
-  if(direction=='a'){
-    
-    // Parcours la grille en cherchant la limite gauche du radeau
-    for (int x=0; x<LARGEUR;x++){
+  if(direction=='a' && j.position_radeau>0){
+
+    for(int x=j.position_radeau;x<j.taille*2+j.position_radeau+1;x++){
+      
+      if((int)j.grille[x][HAUTEUR-1]/10==3){ // Un radeau est inscrit comme un objet de valeur 30
         
-        if(j.grille[x][HAUTEUR-1]==2){
-
-          // Stoppe la recherche si la limite gauche du radeau ne peut être déplacée
-          if(x<1)
-            break;
-
-          // Déplace chaque position du radeau sur la gauche
-          for(int xi=x;xi<x+j.taille*2+1;xi++){
-
-            j.grille[xi][HAUTEUR-1]-=2;
-            j.grille[xi-1][HAUTEUR-1]+=2;
-          }
-
-          // Finis la recherche une fois le déplacement effectué
-          break;
-        }
+        j.grille[x-1][HAUTEUR-1]+=30;
+        j.grille[x][HAUTEUR-1]-=30;
+      }
     }
+    
+    j.position_radeau-=1;
     return j;
   }
 
-  if(direction=='d'){
-    
-    // Parcours la grille (de gauche à droite)
-    // et déplace les positions avec des radeaux sur la droite
-    for (int x=0; x<LARGEUR;x++){
+  if(direction=='d' && j.position_radeau<LARGEUR-j.taille*2-1){
+  
+    for(int x=j.taille*2+j.position_radeau+1;x>=j.position_radeau;x--){
+      
+      if((int)j.grille[x][HAUTEUR-1]/10==3){
         
-        if(j.grille[x][HAUTEUR-1]==2){
-
-          // Stoppe la recherche si la limite droite du radeau ne peut être déplacée
-          if(x>LARGEUR-j.taille*2-2)
-            break;
-
-          //Déplace chaque position du radeau sur la droite
-          for(int xi=x;xi<x+j.taille*2+1;xi++){
-
-            j.grille[xi][HAUTEUR-1]-=2;
-            j.grille[xi+1][HAUTEUR-1]+=2;
-          }
-
-          // Finis la recherche une fois le déplacement effectué
-          break;
-        }
+        j.grille[x+1][HAUTEUR-1]+=30;
+        j.grille[x][HAUTEUR-1]-=30;
+      }
     }
+
+    j.position_radeau+=1;
     return j;
   }
 }
@@ -394,10 +374,10 @@ struct jeu verifier_collision(struct jeu j) {
 
   for(int x=0;x<LARGEUR;x++) {
 
-    if(j.grille[x][HAUTEUR-1]==3) {
+    if(j.grille[x][HAUTEUR-1]>30) {
 
       j.score++;
-      j.grille[x][HAUTEUR-1]=2;
+      j.grille[x][HAUTEUR-1]=30;
     }
   }
 
@@ -406,7 +386,7 @@ struct jeu verifier_collision(struct jeu j) {
 
 void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
 
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3+4;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau + Position Radeau
+  int taille_ligne=LARGEUR*HAUTEUR*3+7+3+4;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau + Position Radeau
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
 
@@ -439,42 +419,56 @@ void sauvegarde_partie(struct jeu j, int numero_sauvegarde){
   // Modifie la ligne de la sauvegarde
 
   if(numero_sauvegarde<=nb_lignes_fichier){
+    
+    int position_fichier=0;
+    char temp_buffer[7];
 
     // Ecrit la grille dans le buffer
     for(int y=0;y<HAUTEUR;y++)
       for(int x=0;x<LARGEUR;x++){
 
-        buffer[x*2+y*LARGEUR*2]=j.grille[x][y]+'0';
-        buffer[x*2+y*LARGEUR*2+1]='\t';
+        // Formate l'objet (00)
+        snprintf(temp_buffer,3,"%02d",j.grille[x][y]);
+
+        // Ecrit l'objet formatté dans le buffer
+        buffer[position_fichier]=temp_buffer[0];
+        buffer[position_fichier+1]=temp_buffer[1];
+        buffer[position_fichier+2]='\t';
+        position_fichier+=3;      
       }
-    
 
     // Formate le score (000000)
-    char temp_buffer[7];
     snprintf(temp_buffer,7,"%06d",j.score);
 
     // Ecrit le score dans le buffer
-    for(int i=0;i<6;i++){
-      
-      buffer[HAUTEUR*LARGEUR*2+i]=temp_buffer[i];
-    }
-    buffer[HAUTEUR*LARGEUR*2+6]='\t';
+    for(int i=0;i<6;i++)  
+      buffer[position_fichier+i]=temp_buffer[i];
+
+    position_fichier+=6;
+    
+    buffer[position_fichier]='\t';
+    position_fichier++;
 
     // Formate la taille du radeau (00)
     snprintf(temp_buffer,3,"%02d",j.taille);
 
     // Ecrit la taille du radeau dans le buffer
     for(int i=0;i<2;i++)
-      buffer[HAUTEUR*LARGEUR*2+7+i]=temp_buffer[i];
+      buffer[position_fichier+i]=temp_buffer[i];
     
-    buffer[HAUTEUR*LARGEUR*2+9]='\t';
+    position_fichier+=2;
+
+    buffer[position_fichier]='\t';
+    position_fichier++;
 
     // Formate la position du radeau
     snprintf(temp_buffer,3,"%02d",j.position_radeau);
 
     for(int i=0;i<2;i++)
-      buffer[HAUTEUR*LARGEUR*2+10+i]=temp_buffer[i];
+      buffer[position_fichier+i]=temp_buffer[i];
     
+    position_fichier+=2;
+
     // Copie le buffer dans le fichier enregistré
 
     for(int i=0;i<taille_ligne+1;i++)
@@ -498,20 +492,19 @@ struct jeu charge_partie(int numero_sauvegarde){
 
   FILE *fichier_sauvegarde=fopen("fichier_sauvegarde.txt","r");
   struct jeu j;
-  int taille_ligne=LARGEUR*HAUTEUR*2+7+3+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
+  int taille_ligne=LARGEUR*HAUTEUR*3+7+3+3;  // Nombre de char de la grille + Nombre de char du score + Nb de char de la taille du radeau
   char buffer[16];
 
   // Se déplace dans le fichier à la ligne de la sauvegarde à charger
 
-  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde+1,SEEK_SET);
-  fgets(buffer,2,fichier_sauvegarde);
+  fseek(fichier_sauvegarde,taille_ligne*numero_sauvegarde,SEEK_SET);
 
   // Charge la grille
 
   for(int y=0;y<HAUTEUR;y++)
     for(int x=0;x<LARGEUR;x++){
       
-      fgets(buffer,2,fichier_sauvegarde);
+      fgets(buffer,3,fichier_sauvegarde);
 
       sscanf(buffer,"%d",&j.grille[x][y]);
       fseek(fichier_sauvegarde,1,SEEK_CUR); // Décale la lecture sur la ligne
@@ -530,7 +523,7 @@ struct jeu charge_partie(int numero_sauvegarde){
 
   // Charge la position du radeau
 
-  fseek(fichier_sauvegarde,0,SEEK_CUR);
+  fseek(fichier_sauvegarde,1,SEEK_CUR);
   fgets(buffer,3,fichier_sauvegarde);
   sscanf(buffer,"%d",&j.position_radeau);
 
