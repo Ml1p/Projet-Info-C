@@ -9,16 +9,19 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
-#define N 10
-#define EPS 1.e-8
 
-#define LARGEUR 10
+#define LARGEUR 15
 #define HAUTEUR 30
 
 // Code flèche gauche 91 68
 // Code Flèche droite 91 67
 // Code flèche haut   91 65
 // Code Flèche bas    91 66
+
+// 1 > Objet    5 > Méga Objet
+// 2 > Bombe    6 > Méga Bombe
+// 3 > Bonus    7 > Méga Bonus
+// 4 > Malus    8 > Méga Malus
 
 struct jeu {
   int grille[LARGEUR][HAUTEUR];
@@ -30,20 +33,20 @@ struct jeu {
 struct jeu init_jeu(){
   struct jeu p;
   p.score=0;
-  p.taille=2;
-  p.position_radeau=LARGEUR/2-p.taille;
+  p.taille=5;
+  p.position_radeau=LARGEUR/2-p.taille/2-1;
   for(int y=0;y<HAUTEUR;y++)
     for(int x=0;x<LARGEUR;x++)
       p.grille[x][y]=0;
 
-  for(int x=0; x<p.taille*2+1;x++){
-    p.grille[LARGEUR/2-p.taille+x][HAUTEUR-1]=30;
+  for(int x=0; x<p.taille;x++){
+    p.grille[LARGEUR/2-p.taille/2-1+x][HAUTEUR-1]=30;
   }
   return p;
 }
 
 int main(void) {
-      
+  
   srand(time(NULL));
   struct jeu init_jeu();
   struct jeu p = init_jeu();
@@ -52,7 +55,7 @@ int main(void) {
   void affiche_menu(struct jeu);
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
-  struct jeu verifier_collision(struct jeu);
+  struct jeu verifier_collision(struct jeu, int*);
   void sauvegarde_partie(struct jeu, int);
   struct jeu charge_partie(int);
   void config_terminal();
@@ -66,7 +69,7 @@ int main(void) {
   int selection=0;
   int i=0;
   char touche;
-  while(p.score>-50 && gameOver!=1) {
+  while(p.score>-50 && gameOver!=1){
   
     switch (mode){
     case 0: // En mode jeu
@@ -96,11 +99,24 @@ int main(void) {
       if(i==10){ 
         
         p=mise_a_jour_objets(p);
-        p=verifier_collision(p);
+        p=verifier_collision(p, &gameOver);
         i=0;
       }
 
-      affiche_jeu(p,mode);
+      system("clear");
+      for(int y=0;y<HAUTEUR;y++){
+        for(int x=0;x<LARGEUR;x++){
+          
+          if(p.grille[x][y]!=0)
+            printf("%d  ",p.grille[x][y]);
+          else
+            printf("   ");
+        }
+        printf("\n");
+      }
+      printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+      
+      //affiche_jeu(p,mode);
       break;
     
     case 1: // En mode Pause
@@ -257,7 +273,7 @@ int main(void) {
 
   sequence_touche[0]=sequence_touche[1];
   sequence_touche[1]=getchar();
-  usleep(1e4);
+  usleep(1e5);
   i++;
   }
 } 
@@ -335,9 +351,9 @@ struct jeu déplacer(char direction, struct jeu j){
 
   if(direction=='a' && j.position_radeau>0){
 
-    for(int x=j.position_radeau;x<j.taille*2+j.position_radeau+1;x++){
+    for(int x=j.position_radeau;x<j.taille+j.position_radeau;x++){
       
-      if((int)j.grille[x][HAUTEUR-1]/10==3){ // Un radeau est inscrit comme un objet de valeur 30
+      if((int)j.grille[x][HAUTEUR-1]/10==3){ // Un radeau est inscrit comme un objet dont la dizaine est 3
         
         j.grille[x-1][HAUTEUR-1]+=30;
         j.grille[x][HAUTEUR-1]-=30;
@@ -348,9 +364,9 @@ struct jeu déplacer(char direction, struct jeu j){
     return j;
   }
 
-  if(direction=='d' && j.position_radeau<LARGEUR-j.taille*2-1){
+  if(direction=='d' && j.position_radeau<LARGEUR-j.taille-2){
   
-    for(int x=j.taille*2+j.position_radeau+1;x>=j.position_radeau;x--){
+    for(int x=j.taille+j.position_radeau;x>=j.position_radeau;x--){
       
       if((int)j.grille[x][HAUTEUR-1]/10==3){
         
@@ -364,7 +380,7 @@ struct jeu déplacer(char direction, struct jeu j){
   }
 }
 
-struct jeu mise_a_jour_objets(struct jeu j) {
+struct jeu mise_a_jour_objets(struct jeu j){
 
   int cases[3];
 
@@ -393,9 +409,9 @@ struct jeu mise_a_jour_objets(struct jeu j) {
         j.grille[x+1][y-1]=0;
       }
 
-      //--------------------
+      //----------------------------------------
       // Vitesse
-      //--------------------
+      //----------------------------------------
       if(y>HAUTEUR-1){
 
         // Seul un des objets dans les cases supérieures à une vitesse Horizontalle => l'Objet créé garde cette vitesse
@@ -414,29 +430,45 @@ struct jeu mise_a_jour_objets(struct jeu j) {
       }
 
       // 2 ou 3 des Objets sont les mêmes => Créé un Méga Objet
-      if(cases[0]%10!=0 && cases[0]%10==cases[1]%10 || cases[0]%10==cases[2]%10 && cases[0]%10!=0){
+      if(cases[0]%10!=0 && (cases[0]%10==cases[1]%10 || cases[0]%10==cases[2]%10)){
 
         if(cases[0]%10<5)
-        j.grille[x][y]=cases[0]%10+4;
+
+          j.grille[x][y]=cases[0]%10+4;
       
+      // Collision de Méga Objets => Garde l'un des deux
       else
+
         j.grille[x][y]=cases[0]%10;
       }
-      if(cases[1]%10==cases[2]%10 && cases[1]%10<5)
-        j.grille[x][y]=cases[1]%10+4;
+      // Même chose mais en comparant en haut à gauche et en haut à droite
+      if(cases[1]!=0 && cases[1]%10==cases[2]%10 && cases[1]%10<5){
+
+        if(cases[1]%10<5)
+          
+          j.grille[x][y]=cases[1]%10+4;
+        
+        else
+
+          j.grille[x][y]=cases[0]%10;
+      }
+
 
 
       // Un seul objet dans les cases supérieures => Cet Objet descend
       if(cases[1]==0 && cases[2]==0)
         j.grille[x][y]=cases[0];
+
       if(cases[0]==0 && cases[2]==0)
         j.grille[x][y]=cases[1];
+      
       if(cases[0]==0 && cases[1]==0)
         j.grille[x][y]=cases[2];
       
       
-      // Si juste vitesse => Aucun des cas précédents => Pas d'Objet qui descend
+      // Si l'Objet à uniquement une vitesse => Aucun des cas précédents => Pas d'Objet qui descend
       if(j.grille[x][y]%10==0)
+
         j.grille[x][y]=0;
     }
 
@@ -455,119 +487,270 @@ struct jeu mise_a_jour_objets(struct jeu j) {
       j.grille[x][HAUTEUR-1]=0;
       j.score-=10;
     }
+    
+    // L'objet n'est ni un radeau, ni un objet, ni un Méga objet => Destruction sans toucher aux points
+    if(obj<10 && obj!=1 && obj!=5)
 
-    if(obj<10 && obj!=1 && obj!=5) // L'objet n'est ni un radeau, ni un objet, ni un Méga objet
       j.grille[x][HAUTEUR-1]=0;
   }
   
-  int vitesse=0;
+  int vitesse_aléatoire=0;
   int objet_aleatoire=rand()%3;
   
   if(objet_aleatoire==1){
     
-    // Donne une vitesse aléatoire à l'objet
-    vitesse=rand()%5;
-    if(vitesse>2)
-      vitesse=0;
+    // Donne une vitesse aléatoire à l'objet (1 ou 2 => Gauche ou droite; le reste => Pas de vitesse)
+    vitesse_aléatoire=rand()%5;
+    if(vitesse_aléatoire>2)
+      vitesse_aléatoire=0;
 
-    j.grille[rand()%LARGEUR][0]=1+vitesse*10;
+    j.grille[rand()%LARGEUR][0]=1+vitesse_aléatoire*10;
   }
   
   int bombe=rand()%25;
   
   if(bombe == 1){
     
-    vitesse=rand()%5;
-    if(vitesse>2)
-      vitesse=0;
+    vitesse_aléatoire=rand()%5;
+    if(vitesse_aléatoire>2)
+      vitesse_aléatoire=0;
 
-    j.grille[rand()%LARGEUR][0]=2+vitesse*10;
+    j.grille[rand()%LARGEUR][0]=2+vitesse_aléatoire*10;
   }
   
   int bonus=rand()%50;
   
   if(bonus == 1){
 
-    vitesse=rand()%5;
-    if(vitesse>2)
-      vitesse=0;
+    vitesse_aléatoire=rand()%5;
+    if(vitesse_aléatoire>2)
+      vitesse_aléatoire=0;
 
-  	j.grille[rand()%LARGEUR][0]=3+vitesse*10;
+  	j.grille[rand()%LARGEUR][0]=3+vitesse_aléatoire*10;
   }
   	
   int malus=rand()%60;
   
   if(malus == 1){
 
-    vitesse=rand()%5;
-    if(vitesse>2)
-      vitesse=0;
+    vitesse_aléatoire=rand()%5;
+    if(vitesse_aléatoire>2)
+      vitesse_aléatoire=0;
 
-  	j.grille[rand()%LARGEUR][0]=4+vitesse*10;
+  	j.grille[rand()%LARGEUR][0]=4+vitesse_aléatoire*10;
   }
 
-  return j;      
+  return j;
   
 }
 
-struct jeu verifier_collision(struct jeu j) {
+struct jeu verifier_collision(struct jeu j, int* gameOver){
+
+  int nb_radeau_ajoutés;
+  int décalage;
 
   for(int x=0;x<LARGEUR;x++) {
 
-    if(j.grille[x][HAUTEUR-1]==31) {
+    if(j.grille[x][HAUTEUR-1]==31){ // Objet
 
       j.score++;
       j.grille[x][HAUTEUR-1]=30;
     }
     
-    if(j.grille[x][HAUTEUR-1]==33) {
 
-	    j.score--;
-	    j.grille[x][HAUTEUR-1]=0; // Suuprime le radeau au contact d'une bombe
+    if(j.grille[x][HAUTEUR-1]==32){ // Bombe
+
+	    j.grille[x][HAUTEUR-1]=0; // Suprime une partie du radeau au contact d'une bombe
+
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
+
+          j.position_radeau=x;
+          x=LARGEUR;
+        }
 	  }    
 	
-    if(j.grille[x][HAUTEUR-1]==34){ // Aggrandis le radeau au contact d'un bonus
 
-	    j.score++;
-      
+    if(j.grille[x][HAUTEUR-1]==33){ // Bonus
+
+      j.grille[x][HAUTEUR-1]=30;
+
       // Comble le radeau si il a des trous
-      int nb_radeau_ajoutés=0;
-      for(int i=j.position_radeau;i<j.position_radeau+j.taille*2+1;i++)
+      nb_radeau_ajoutés=0;
+      for(int i=j.position_radeau;i<j.position_radeau+j.taille;i++)
         if(j.grille[i][HAUTEUR-1]<30 && nb_radeau_ajoutés<2){
 
           j.grille[i][HAUTEUR-1]=30;
           nb_radeau_ajoutés++;
         }
       
-      // Ajoute des pièces au radeau si il n'as pas été comblé
-      /*int décalage=1;
-      while(nb_radeau_ajoutés<2){
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
 
-        if(j.position_radeau-décalage>=0){ // Tente d'ajouter une pièce sur la gauche
-
-          j.grille[j.position_radeau-décalage]=30;
-          nb_radeau_ajoutés++;
+          j.position_radeau=x;
+          x=LARGEUR;
         }
-
-        if(j.position_radeau+j.taille+décalage>=0){ // Tente d'ajouter une pièce sur la gauche
-
-          j.grille[j.position_radeau-décalage]=30;
-          nb_radeau_ajoutés++;
-        }
-      }*/
-      j.taille++;
-
       
 
+      // Aggrandis le radeau s'il n'as pas été comblé
+      décalage=0;
+      while(nb_radeau_ajoutés<2 && décalage<LARGEUR){
+
+        if(j.position_radeau-décalage>=0 && nb_radeau_ajoutés<2){
+          
+          j.grille[x][HAUTEUR-1]=30;
+          nb_radeau_ajoutés++;
+        }
+
+        if(j.position_radeau+décalage+j.taille<=LARGEUR-1 && nb_radeau_ajoutés<2){
+          
+          j.grille[x][HAUTEUR-1]=30;
+          nb_radeau_ajoutés++;
+        }
+        décalage++;
+      }
+      
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
+
+          j.position_radeau=x;
+          x=LARGEUR;
+        }
+    }
+
+
+    if(j.grille[x][HAUTEUR-1]==34){ // Malus
+
+      j.grille[x][HAUTEUR-1]=30;
+
+      // Rétrécis le radeau
+      nb_radeau_ajoutés=0;
+      décalage=0;
+      while(nb_radeau_ajoutés<2 && décalage<LARGEUR){
+
+        if(j.grille[x][j.position_radeau+décalage]>30 && nb_radeau_ajoutés<2){
+          
+          j.grille[x][HAUTEUR-1]=0;
+          nb_radeau_ajoutés++;
+        }
+
+        if(j.grille[x][j.position_radeau+j.taille-décalage]>30 && nb_radeau_ajoutés<2){
+          
+          j.grille[x][HAUTEUR-1]=0;
+          nb_radeau_ajoutés++;
+        }
+
+        décalage++;
+      }
+      
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
+
+          j.position_radeau=x;
+          x=LARGEUR;
+        }
+    }
+
+
+    if(j.grille[x][HAUTEUR-1]==35){ // Méga Objet (Analogue à l'objet)
+
+      j.score+=10;
       j.grille[x][HAUTEUR-1]=30;
     }
 
-    if(j.grille[x][HAUTEUR-1]==35) { // Rétrecis le radeau pour un malus
 
-      j.score--;
-      j.taille--;
-      j.grille[x][HAUTEUR-1]=30;
+    if(j.grille[x][HAUTEUR-1]==36){ // Méga Bombe (Kaboom)
+
+      *gameOver=1;
     }
+
+
+    if(j.grille[x][HAUTEUR-1]==37){ // Méga Bonus (Analogue du bonus)
+    
+      j.grille[x][HAUTEUR-1]=30;
+
+      // Comble le radeau si il a des trous
+      nb_radeau_ajoutés=0;
+      for(int i=j.position_radeau;i<j.position_radeau+j.taille;i++)
+        if(j.grille[i][HAUTEUR-1]<30 && nb_radeau_ajoutés<4){
+
+          j.grille[i][HAUTEUR-1]=30;
+          nb_radeau_ajoutés++;
+        }
+      
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
+
+          j.position_radeau=x;
+          x=LARGEUR;
+        }
+      
+
+      // Aggrandis le radeau s'il n'as pas été comblé
+      décalage=0;
+      while(nb_radeau_ajoutés<4 && décalage<LARGEUR){
+
+        if(j.position_radeau-décalage>=0 && nb_radeau_ajoutés<4){
+          
+          j.grille[x][HAUTEUR-1]=30;
+          nb_radeau_ajoutés++;
+        }
+
+        if(j.position_radeau+décalage+j.taille<=LARGEUR-1 && nb_radeau_ajoutés<4){
+          
+          j.grille[x][HAUTEUR-1]=30;
+          nb_radeau_ajoutés++;
+        }
+        décalage++;
+      }
+      
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
+
+          j.position_radeau=x;
+          x=LARGEUR;
+        }
+    }
+
+
+    if(j.grille[x][HAUTEUR-1]==38){ // Méga Malus (Analogue au bonus)
+      
+      j.grille[x][HAUTEUR-1]=30;
+
+      // Rétrécis le radeau
+      nb_radeau_ajoutés=0;
+      décalage=0;
+      while(nb_radeau_ajoutés<4 && décalage<LARGEUR){
+
+        if(j.grille[x][j.position_radeau+décalage]>30 && nb_radeau_ajoutés<4){
+          
+          j.grille[x][HAUTEUR-1]=0;
+          nb_radeau_ajoutés++;
+        }
+
+        if(j.grille[x][j.position_radeau+j.taille-décalage]>30 && nb_radeau_ajoutés<4){
+          
+          j.grille[x][HAUTEUR-1]=0;
+          nb_radeau_ajoutés++;
+        }
+
+        décalage++;
+      }
+      
+      // Détermine la nouvelle position du radeau
+      for(int x=0;x<LARGEUR;x++)
+        if(j.grille[x][LARGEUR-1]>30){
+
+          j.position_radeau=x;
+          x=LARGEUR;
+        }
+    }  
   }
 
   return j;
