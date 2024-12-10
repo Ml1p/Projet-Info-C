@@ -9,16 +9,19 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
-#define N 10
-#define EPS 1.e-8
 
-#define LARGEUR 10
+#define LARGEUR 15
 #define HAUTEUR 30
 
 // Code flèche gauche 91 68
 // Code Flèche droite 91 67
 // Code flèche haut   91 65
 // Code Flèche bas    91 66
+
+// 1 > Objet    5 > Méga Objet
+// 2 > Bombe    6 > Méga Bombe
+// 3 > Bonus    7 > Méga Bonus
+// 4 > Malus    8 > Méga Malus
 
 struct jeu {
   int grille[LARGEUR][HAUTEUR];
@@ -30,20 +33,20 @@ struct jeu {
 struct jeu init_jeu(){
   struct jeu p;
   p.score=0;
-  p.taille=2;
-  p.position_radeau=LARGEUR/2-p.taille;
+  p.taille=5;
+  p.position_radeau=LARGEUR/2-p.taille/2-1;
   for(int y=0;y<HAUTEUR;y++)
     for(int x=0;x<LARGEUR;x++)
       p.grille[x][y]=0;
 
-  for(int x=0; x<p.taille*2+1;x++){
-    p.grille[LARGEUR/2-p.taille+x][HAUTEUR-1]=30;
+  for(int x=0; x<p.taille;x++){
+    p.grille[LARGEUR/2-p.taille/2-1+x][HAUTEUR-1]=30;
   }
   return p;
 }
 
 int main(void) {
-      
+  
   srand(time(NULL));
   struct jeu init_jeu();
   struct jeu p = init_jeu();
@@ -52,7 +55,7 @@ int main(void) {
   void affiche_menu(struct jeu);
   struct jeu déplacer(char direction, struct jeu);
   struct jeu mise_a_jour_objets(struct jeu);
-  struct jeu verifier_collision(struct jeu);
+  struct jeu verifier_collision(struct jeu, int*);
   void sauvegarde_partie(struct jeu, int);
   struct jeu charge_partie(int);
   void config_terminal();
@@ -68,7 +71,7 @@ int main(void) {
   int difficulté=20;
   int temposmama=0;
   char touche;
-  while(p.score>-50 && gameOver!=1) {
+  while(p.score>-50 && gameOver!=1){
   
     switch (mode){
     case 0: // En mode jeu
@@ -98,7 +101,7 @@ int main(void) {
       if(i==difficulté){ 
         
         p=mise_a_jour_objets(p);
-        p=verifier_collision(p);
+        p=verifier_collision(p, &gameOver);
         i=0;
       }
       
@@ -157,6 +160,8 @@ int main(void) {
           mode=0;
           i=0;
         }
+        if(touche=='j')
+        	mode=5;
       }
 
       affiche_menu(p);
@@ -257,6 +262,11 @@ int main(void) {
 
       affiche_menu_sauvegardes(selection,0);
       break;
+      
+    case 5:
+      system("clear");
+      printf("Bienvenue dans le meilleur jeu que cette UE vous proposera, Le principe est simple, récolter le plus d'objets possible à l'aide de votre radeau (1 objet récolté= +1 point, 1 objet perdu = -1 point). Mais gare aux bombes (Q) ! En toucher une fera exploser une partie de votre radeau, créant un trou béant... Des malus et des bonus seront aussi attrapables. Un + recolté aggrandira la taille de votre radeau alors qu'un - le rétrécira. Attention à ne pas atteindre un score de -50 ou ce sera GAME OVER. Bon jeu à toi jeune pirate. De nouvelles mises à jour seront prochainement disposibles ! n'hésites pas à aider au bon développement du jeu en faisant un don à l'adresse Paypal suivante : benarclem@gmail.com ; Merci !");
+      break;
     }
 
   sequence_touche[0]=sequence_touche[1];
@@ -298,13 +308,13 @@ void affiche_jeu(struct jeu j,int jeu_en_pause){
 
       if (j.grille[x][y]%10==1) // Objet
         printf(" 0 ");
-      
+       
       if (j.grille[x][y]%10==2) // Bombe
       	printf(" Q ");
-
+      	     	
       if (j.grille[x][y]%10==3) // Bonus
       	printf(" + ");
-      
+      	
       if (j.grille[x][y]%10==4) // Malus
       	printf(" _ ");
 
@@ -340,9 +350,9 @@ struct jeu déplacer(char direction, struct jeu j){
 
   if(direction=='a' && j.position_radeau>0){
 
-    for(int x=j.position_radeau;x<j.taille*2+j.position_radeau+1;x++){
+    for(int x=j.position_radeau;x<j.taille+j.position_radeau;x++){
       
-      if((int)j.grille[x][HAUTEUR-1]/10==3){ // Un radeau est inscrit comme un objet de valeur 30
+      if((int)j.grille[x][HAUTEUR-1]/10==3){ // Un radeau est inscrit comme un objet dont la dizaine est 3
         
         j.grille[x-1][HAUTEUR-1]+=30;
         j.grille[x][HAUTEUR-1]-=30;
@@ -353,9 +363,9 @@ struct jeu déplacer(char direction, struct jeu j){
     return j;
   }
 
-  if(direction=='d' && j.position_radeau<LARGEUR-j.taille*2-1){
+  if(direction=='d' && j.position_radeau<LARGEUR-j.taille){
   
-    for(int x=j.taille*2+j.position_radeau+1;x>=j.position_radeau;x--){
+    for(int x=j.taille+j.position_radeau;x>=j.position_radeau;x--){
       
       if((int)j.grille[x][HAUTEUR-1]/10==3){
         
@@ -377,43 +387,89 @@ struct jeu mise_a_jour_objets(struct jeu j) {
 
       if(j.grille[x][y]>0){
           
-          j.grille[x][y+1]+=j.grille[x][y];
-          j.grille[x][y]-=j.grille[x][y];
+          j.grille[x][y+1]+=j.grille[x][y]%10;
+          j.grille[x][y]-=j.grille[x][y]%10;
         }
       }   
     }
 
   for(int x=0;x<LARGEUR;x++) {
 
-    if(j.grille[x][HAUTEUR-1]==1){
+    int obj=j.grille[x][HAUTEUR-1];
+    if(obj==1){
 
       j.grille[x][HAUTEUR-1]=0; //objets atteignants la fin de la grille disparaissent
       j.score-=1;
     }
-  }
 
+    if(obj==5){ // Méga Objet perdu
+
+      j.grille[x][HAUTEUR-1]=0;
+      j.score-=10;
+    }
+    
+    // L'objet n'est ni un radeau, ni un objet, ni un Méga objet => Destruction sans toucher aux points
+    if(obj<10 && obj!=1 && obj!=5)
+
+      j.grille[x][HAUTEUR-1]=0;
+  }
+  
   int objet_aleatoire=rand()%3;
   
-  if(objet_aleatoire==1)
+  if(objet_aleatoire==1){
 
     j.grille[rand()%LARGEUR][0]=1;
+  }
+  
+  int bombe=rand()%25;
+  
+  if(bombe == 1){
 
+    j.grille[rand()%LARGEUR][0]=2;
+  }
+  
+  int bonus=rand()%50;
+  
+  if(bonus == 1){
 
-  return j;      
+  	j.grille[rand()%LARGEUR][0]=3;
+  }
+  	
+  int malus=rand()%60;
+  
+  if(malus == 1){
+
+  	j.grille[rand()%LARGEUR][0]=4;
+  }
+
+  return j;
   
 }
 
-struct jeu verifier_collision(struct jeu j) {
+struct jeu verifier_collision(struct jeu j, int* gameOver){
 
-  for(int x=0;x<LARGEUR;x++) {
+  for(int x=0; x<LARGEUR;x++){
 
-    if(j.grille[x][HAUTEUR-1]>30) {
-
+    if(j.grille[x][HAUTEUR-1]==31){
+      
       j.score++;
       j.grille[x][HAUTEUR-1]=30;
     }
+    if(j.grille[x][HAUTEUR-1]==32){
+      
+      j.grille[x][HAUTEUR-1]=30;
+    }
+    if(j.grille[x][HAUTEUR-1]==33){
+      
+      j.score+=10;
+      j.grille[x][HAUTEUR-1]=30;
+    }
+    if(j.grille[x][HAUTEUR-1]==34){
+      
+      j.score-=10;
+      j.grille[x][HAUTEUR-1]=30;
+    }
   }
-
   return j;
 }
 
@@ -598,6 +654,7 @@ void affiche_menu(struct jeu j) {
 	printf("c: charger la partie\n");
 	printf("r: recommencer une partie\n");
 	printf("q: quitter le jeu\n");
+	printf("j: règle");
 	
 }
 
@@ -675,3 +732,5 @@ void config_terminal() {
     // Rétablissement automatique de la configuration à la sortie
     atexit(restaurer_terminal);
 }
+
+
