@@ -65,6 +65,8 @@ int main(void) {
   int sequence_touche[2]={0,0};
   int selection=0;
   int i=0;
+  int difficulté=10;
+  int temposmama=0;
   char touche;
   while(p.score>-50 && gameOver!=1) {
   
@@ -89,16 +91,24 @@ int main(void) {
       
       if(sequence_touche[0]==91 && sequence_touche[1]==67)
         p=déplacer('d',p);
-
-
+          
       // Fait descendre les objets toutes les 10 images
       // Permet de séparer le nombre d'images par secondes et la difficulté
-      if(i==10){ 
+        if(i==difficulté){ 
         
         p=mise_a_jour_objets(p);
         p=verifier_collision(p);
         i=0;
       }
+      
+    if(temposmama==50) {
+        difficulté--;
+        temposmama=0;
+    }
+        
+            
+            
+       
 
       affiche_jeu(p,mode);
       break;
@@ -259,6 +269,7 @@ int main(void) {
   sequence_touche[1]=getchar();
   usleep(1e4);
   i++;
+  temposmama++;
   }
 } 
 
@@ -832,5 +843,8 @@ void config_terminal() {
     // Rétablissement automatique de la configuration à la sortie
     atexit(restaurer_terminal);
 }
+
+
+
 
 
