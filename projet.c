@@ -277,36 +277,57 @@ void affiche_jeu(struct jeu j,int jeu_en_pause){
 
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
-    printf("*  ");
+    printf(" * ");
     
   printf("\n");
   for(int y=0;y<HAUTEUR;y++) {
   
     // Affiche le bord gauche de la grille
-    printf("*  ");
+    printf(" * ");
 
     // Affiche une ligne de la grille
     for(int x=0;x<LARGEUR;x++){
 
       if ((int)j.grille[x][y]/10==3){
-        printf("-  ");
+        printf("---");
         continue;
       }
 
-      if (j.grille[x][y]%10==0)
+      if (j.grille[x][y]%10==0) // Vide
         printf("   ");
 
-      if (j.grille[x][y]%10==1)
-        printf("0  ");
+      if (j.grille[x][y]%10==1) // Objet
+        printf(" 0 ");
+      
+      if (j.grille[x][y]%10==2) // Bombe
+      	printf(" Q ");
+
+      if (j.grille[x][y]%10==3) // Bonus
+      	printf(" + ");
+      
+      if (j.grille[x][y]%10==4) // Malus
+      	printf(" _ ");
+
+      if (j.grille[x][y]%10==5) // Méga Objet
+        printf("000");
+      
+      if (j.grille[x][y]%10==6) // Méga Bombe
+        printf("QQQ");
+      
+      if (j.grille[x][y]%10==7) // Méga Bonus
+        printf("+++");
+      
+      if (j.grille[x][y]%10==8) // Méga Malus
+        printf("___");
       }
       
     // Affiche le bord droit de la grille
-    printf("*  \n");
+    printf(" * \n");
     }
     
   // Affiche le bas de la grille
   for(int i=0;i<LARGEUR+2;i++)
-    printf("*  ");
+    printf(" * ");
 
   printf("\n");
 
@@ -354,10 +375,10 @@ struct jeu mise_a_jour_objets(struct jeu j) {
 
     for(int x=0;x<LARGEUR;x++) {
 
-      if(j.grille[x][y]==1) {
+      if(j.grille[x][y]>0){
           
-          j.grille[x][y]-=1; //la grille actuelle perd un objet
-          j.grille[x][y+1]+=1; // la grille actuelle+1 gagne un objet
+          j.grille[x][y+1]+=j.grille[x][y];
+          j.grille[x][y]-=j.grille[x][y];
         }
       }   
     }
