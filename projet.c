@@ -10,8 +10,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LARGEUR 25
-#define HAUTEUR 50
+#define LARGEUR 15
+#define HAUTEUR 35
 
 // Code flèche gauche 91 68
 // Code Flèche droite 91 67
@@ -32,8 +32,8 @@ struct jeu {
 
 struct jeu init_jeu(){
   struct jeu p;
-  p.score=0;
-  p.taille=9;
+  p.score=-49;
+  p.taille=5;
   p.position_radeau=LARGEUR/2-p.taille/2-1;
   for(int y=0;y<HAUTEUR;y++)
     for(int x=0;x<LARGEUR;x++)
@@ -119,7 +119,6 @@ int main(void) {
 
         if(nb_radeaux==0){
           gameOver=1;
-          printf("\n\n\n\n\n\n\n\n\n\n Perdu\n");
           break;
         }
         
@@ -550,6 +549,9 @@ int main(void) {
   i++;
   temp_difficulté++;
   }
+  
+  system("clear");
+  printf("\n\n\n\n\n\n\n\n\n\t\tPerdu\n\n");
 } 
 
 
@@ -557,7 +559,7 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
 
   system("clear");
 
-	printf("\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\t\t\t");
+	printf("\n\n\t\t");
 
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
@@ -568,10 +570,10 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
   
     if(jeu_en_pause==1 && y==(int)(HAUTEUR/2))
 
-      printf("\n\t\t\t\t\t\t\t\t\tAppuyez sur A, D ou les flèches directionnelles pour reprendre la partie\n\n");
+      printf("\n\t\tAppuyez sur A, D ou les flèches directionnelles pour reprendre la partie\n\n");
 
     // Affiche le bord gauche de la grille
-    printf("\t\t\t\t\t\t\t\t\t * ");
+    printf("\t\t * ");
 
     // Affiche une ligne de la grille
     for(int x=0;x<LARGEUR;x++){
@@ -613,7 +615,7 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
     printf(" * \n");
     }
   
-  printf("\t\t\t\t\t\t\t\t\t");
+  printf("\t\t");
   // Affiche le bas de la grille
   for(int i=0;i<LARGEUR+2;i++)
     printf(" * ");
@@ -621,7 +623,7 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
   printf("\n");
 
   printf("   ");
-  printf("\n\t\t\t\t\t\t\t\t\t");
+  printf("\n\t\t");
 
   printf("Score : %d",j.score);
 
@@ -1388,16 +1390,16 @@ void affiche_menu(struct jeu j){
 
       meilleur_score=charge_partie(i).score;
 
-	printf("\n\n\n\n\n\n\n\n\n\n\n\n\n");
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tMEILLEUR SCORE : (%d)\n",meilleur_score);
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tscore : (%d)\n\n\n",j.score);
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tm: reprendre la partie\n\n");
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\ts: sauvegarder la partie\n\n");
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tc: charger la partie\n\n");
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tr: recommencer une partie\n\n");
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tq: quitter le jeu\n\n");
-	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tj: règle\n\n");
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\td: choix difficulté\n");
+	printf("\n\n");
+  printf("\t\tMEILLEUR SCORE : (%d)\n",meilleur_score);
+	printf("\t\tscore : (%d)\n\n\n",j.score);
+	printf("\t\tm: reprendre la partie\n\n");
+	printf("\t\ts: sauvegarder la partie\n\n");
+	printf("\t\tc: charger la partie\n\n");
+	printf("\t\tr: recommencer une partie\n\n");
+	printf("\t\tq: quitter le jeu\n\n");
+	printf("\t\tj: règle\n\n");
+  printf("\t\td: choix difficulté\n");
 }
 
 void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
@@ -1415,12 +1417,11 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
   
   fclose(fichier_sauvegarde);
 
-  printf("\n\n\n\n\n\n\n\n\n\n");
+  printf("\n\n");
 
   for(int i=0;i<nb_lignes_fichier;i++){
     
-    printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
-
+    printf("\t\t");
     // Indique la sauvegarde sélectionnée
     if(i==numero_sauvegarde)
       printf("*  ");
@@ -1433,9 +1434,8 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
     printf("\n");
   }
 
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
-
   // Affiche la nouvelle sauvegarde en dernière
+  printf("\t\t");
   if(mode_sauvegarde==1){
     if(numero_sauvegarde==nb_lignes_fichier)
       printf("*  ");
@@ -1451,7 +1451,7 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
 
   if(numero_sauvegarde<nb_lignes_fichier){
     struct jeu sauvegarde=charge_partie(numero_sauvegarde);
-    printf("\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tScore: %d\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tTaille du radeau: %d",sauvegarde.score,sauvegarde.taille);
+    printf("\n\n\t\tScore: %d\n\tTaille du radeau: %d",sauvegarde.score,sauvegarde.taille);
   }
 }
 
@@ -1459,11 +1459,11 @@ void affiche_menu_difficulté(int numero_difficulté){
 
   system("clear");
 
-  printf("\n\n\n\n\n\n\n\n\n\n");
+  printf("\n\n");
 
 
   // Difficulté Facile
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+  printf("\t\t");
   if(numero_difficulté==0)
     printf("*  ");
   
@@ -1475,7 +1475,7 @@ void affiche_menu_difficulté(int numero_difficulté){
 
 
   // Difficumté Normale
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+  printf("\t\t");
   if(numero_difficulté==1)
     printf("*  ");
   
@@ -1486,7 +1486,7 @@ void affiche_menu_difficulté(int numero_difficulté){
   printf("\n");
 
   // Difficulté Difficile
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+  printf("\t\t");
   if(numero_difficulté==2)
     printf("*  ");
   
@@ -1494,10 +1494,10 @@ void affiche_menu_difficulté(int numero_difficulté){
 
   if(numero_difficulté==2)
     printf("  *");
-  printf("\n\n\n\n\n\n\n\n");
+  printf("\n\n\n\n");
 
   // Difficulté Simulateur de Pluie
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+  printf("\t\t(Injouable)\n\t\t");
   if(numero_difficulté==3)
     printf("*  ");
   
@@ -1508,7 +1508,7 @@ void affiche_menu_difficulté(int numero_difficulté){
   printf("\n");
 
   // Difficulté Flipper
-  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+  printf("\t\t");
   if(numero_difficulté==4)
     printf("*  ");
   
