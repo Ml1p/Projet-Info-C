@@ -10,8 +10,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LARGEUR 15
-#define HAUTEUR 30
+#define LARGEUR 25
+#define HAUTEUR 50
 
 // Code flèche gauche 91 68
 // Code Flèche droite 91 67
@@ -33,7 +33,7 @@ struct jeu {
 struct jeu init_jeu(){
   struct jeu p;
   p.score=0;
-  p.taille=5;
+  p.taille=9;
   p.position_radeau=LARGEUR/2-p.taille/2-1;
   for(int y=0;y<HAUTEUR;y++)
     for(int x=0;x<LARGEUR;x++)
@@ -87,6 +87,7 @@ int main(void) {
         if(touche=='m'){ // Change le mode au menu
 
           mode=2;
+          i=0;
           continue;
         }
       }
@@ -144,6 +145,7 @@ int main(void) {
         if(touche=='m'){
           
           mode=2;
+          i=0;
           continue;
         }
 
@@ -164,14 +166,20 @@ int main(void) {
       
       if(read(STDIN_FILENO,&touche,1) == 1){
       
-        if(touche=='s')
+        if(touche=='s'){
           mode=3;
+          i=0;
+        }
         
-        if(touche=='c')
+        if(touche=='c'){
           mode=4;
+          i=0;
+        }
 
-        if(touche=='m')
+        if(touche=='m'){
           mode=1;
+          i=0;
+        }
         
         if(touche=='q')
           gameOver=1;
@@ -183,14 +191,23 @@ int main(void) {
           temp_difficulté=0;
         }
 
-        if(touche=='j')
+        if(touche=='j'){
         	mode=5;
+          i=0;
+        }
 
-        if(touche=='d')
+        if(touche=='d'){
           mode=6;
+          i=0;
+        }
       }
 
-      affiche_menu(p);
+      if(i==5){
+        
+        affiche_menu(p);
+        i=0;
+      }
+
       break;
     
     case 3: // Sélection Sauvegarde
@@ -233,13 +250,20 @@ int main(void) {
           
           sauvegarde_partie(p,selection);
           mode=2;
+          i=0;
         }
 
         if(touche=='m' || touche=='s')
           mode=2;
+          i=0;
       }
 
-      affiche_menu_sauvegardes(selection,1);
+      if(i==5){
+        
+        affiche_menu_sauvegardes(selection,1);
+        i=0;
+      }
+
       break;
 
 
@@ -280,13 +304,20 @@ int main(void) {
           
           p=charge_partie(selection);
           mode=2;
+          i=0;
         }
 
         if(touche=='m' || touche=='c')
           mode=2;
+          i=0;
+        }
+
+      if(i==5){
+
+        affiche_menu_sauvegardes(selection,0);
+        i=0;
       }
 
-      affiche_menu_sauvegardes(selection,0);
       break;
       
     case 5: // Crédits
@@ -303,12 +334,12 @@ int main(void) {
           selection--;
         
         else
-          selection=3;
+          selection=4;
       }
       
-      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=3){
+      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=4){
         
-        if(selection<3)
+        if(selection<4)
           selection++;
         
         else
@@ -372,17 +403,37 @@ int main(void) {
             fréquence_Vitesse=116;
           }
 
+          // Flipper
+          if(selection==4){
+            
+            difficulté=1;
+
+            fréquence_Apparition[0]=3;
+            fréquence_Apparition[1]=224;
+            fréquence_Apparition[2]=248;
+            fréquence_Apparition[3]=248;
+
+            fréquence_Vitesse=3;
+            p.score=500;
+          }
+
+          mode=0;
           i=0;
           temp_difficulté=0;
-          mode=0;
         }
         
-        if(touche=='m')
+        if(touche=='m'){
           mode=2;
+          i=0;
+        }
       }
 
-      
-      affiche_menu_difficulté(selection);
+      if(i==5){
+
+        affiche_menu_difficulté(selection);
+        i=0;
+      }
+
       break;
     
     case 7: // Sélection difficulté début de partie (Identique à la Sélection de difficulté sans le retour au menu)
@@ -394,12 +445,12 @@ int main(void) {
           selection--;
         
         else
-          selection=3;
+          selection=4;
       }
       
-      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=3){
+      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=4){
         
-        if(selection<3)
+        if(selection<4)
           selection++;
         
         else
@@ -464,13 +515,32 @@ int main(void) {
             p.score=500;
           }
 
+                    // Flipper
+          if(selection==4){
+            
+            difficulté=1;
+
+            fréquence_Apparition[0]=3;
+            fréquence_Apparition[1]=224;
+            fréquence_Apparition[2]=248;
+            fréquence_Apparition[3]=248;
+
+            fréquence_Vitesse=3;
+            p.score=500;
+          }
+
+          mode=0;
           i=0;
           temp_difficulté=0;
-          mode=0;
         }
       }
 
-      affiche_menu_difficulté(selection);
+      if(i==5){
+
+        affiche_menu_difficulté(selection);
+        i=0;
+      }
+
       break;
     }
 
@@ -487,19 +557,21 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
 
   system("clear");
 
+	printf("\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\t\t\t");
+
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
     printf(" * ");
     
   printf("\n");
-  for(int y=0;y<HAUTEUR;y++) {
+  for(int y=0;y<HAUTEUR;y++){
   
     if(jeu_en_pause==1 && y==(int)(HAUTEUR/2))
 
-      printf("\nAppuyez sur A, D ou les flèches directionnelles pour reprendre la partie\n\n");
+      printf("\n\t\t\t\t\t\t\t\t\tAppuyez sur A, D ou les flèches directionnelles pour reprendre la partie\n\n");
 
     // Affiche le bord gauche de la grille
-    printf(" * ");
+    printf("\t\t\t\t\t\t\t\t\t * ");
 
     // Affiche une ligne de la grille
     for(int x=0;x<LARGEUR;x++){
@@ -540,7 +612,8 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
     // Affiche le bord droit de la grille
     printf(" * \n");
     }
-    
+  
+  printf("\t\t\t\t\t\t\t\t\t");
   // Affiche le bas de la grille
   for(int i=0;i<LARGEUR+2;i++)
     printf(" * ");
@@ -548,9 +621,7 @@ void affiche_jeu(struct jeu j, int jeu_en_pause){
   printf("\n");
 
   printf("   ");
-    for(int i=0;i<LARGEUR+2;i++)
-    printf(" %d ",i);
-  printf("\n");
+  printf("\n\t\t\t\t\t\t\t\t\t");
 
   printf("Score : %d",j.score);
 
@@ -1317,16 +1388,16 @@ void affiche_menu(struct jeu j){
 
       meilleur_score=charge_partie(i).score;
 
-	printf("jeu en pause !\n\n\n");
-  printf("MEILLEUR SCORE : (%d)\n\n",meilleur_score);
-	printf("score : (%d)\n",j.score);
-	printf("m: reprendre la partie\n");
-	printf("s: sauvegarder la partie\n");
-	printf("c: charger la partie\n");
-	printf("r: recommencer une partie\n");
-	printf("q: quitter le jeu\n");
-	printf("j: règle\n");
-  printf("d: choix difficulté\n");
+	printf("\n\n\n\n\n\n\n\n\n\n\n\n\n");
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tMEILLEUR SCORE : (%d)\n",meilleur_score);
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tscore : (%d)\n\n\n",j.score);
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tm: reprendre la partie\n\n");
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\ts: sauvegarder la partie\n\n");
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tc: charger la partie\n\n");
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tr: recommencer une partie\n\n");
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tq: quitter le jeu\n\n");
+	printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tj: règle\n\n");
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\td: choix difficulté\n");
 }
 
 void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
@@ -1344,9 +1415,12 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
   
   fclose(fichier_sauvegarde);
 
+  printf("\n\n\n\n\n\n\n\n\n\n");
 
   for(int i=0;i<nb_lignes_fichier;i++){
     
+    printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+
     // Indique la sauvegarde sélectionnée
     if(i==numero_sauvegarde)
       printf("*  ");
@@ -1358,6 +1432,8 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
     
     printf("\n");
   }
+
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
 
   // Affiche la nouvelle sauvegarde en dernière
   if(mode_sauvegarde==1){
@@ -1375,7 +1451,7 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
 
   if(numero_sauvegarde<nb_lignes_fichier){
     struct jeu sauvegarde=charge_partie(numero_sauvegarde);
-    printf("\n\nScore: %d\nTaille du radeau: %d",sauvegarde.score,sauvegarde.taille);
+    printf("\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tScore: %d\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tTaille du radeau: %d",sauvegarde.score,sauvegarde.taille);
   }
 }
 
@@ -1383,7 +1459,11 @@ void affiche_menu_difficulté(int numero_difficulté){
 
   system("clear");
 
+  printf("\n\n\n\n\n\n\n\n\n\n");
+
+
   // Difficulté Facile
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
   if(numero_difficulté==0)
     printf("*  ");
   
@@ -1395,6 +1475,7 @@ void affiche_menu_difficulté(int numero_difficulté){
 
 
   // Difficumté Normale
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
   if(numero_difficulté==1)
     printf("*  ");
   
@@ -1405,6 +1486,7 @@ void affiche_menu_difficulté(int numero_difficulté){
   printf("\n");
 
   // Difficulté Difficile
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
   if(numero_difficulté==2)
     printf("*  ");
   
@@ -1412,15 +1494,27 @@ void affiche_menu_difficulté(int numero_difficulté){
 
   if(numero_difficulté==2)
     printf("  *");
-  printf("\n\n\n");
+  printf("\n\n\n\n\n\n\n\n");
 
   // Difficulté Simulateur de Pluie
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
   if(numero_difficulté==3)
     printf("*  ");
   
   printf("Simulateur de pluie");
 
   if(numero_difficulté==3)
+    printf("  *");
+  printf("\n");
+
+  // Difficulté Flipper
+  printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+  if(numero_difficulté==4)
+    printf("*  ");
+  
+  printf("Flipper");
+
+  if(numero_difficulté==4)
     printf("  *");
   printf("\n");
 }
