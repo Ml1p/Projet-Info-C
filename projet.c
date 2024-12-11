@@ -67,8 +67,9 @@ int main(void) {
   int mode=7; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
   int gameOver=0;
   int difficulté;
-  int fréquence_Apparition[4];
-  int fréquence_Vitesse;
+  int nb_radeaux;
+  int fréquence_Apparition[4]={2,4,6,6};
+  int fréquence_Vitesse=5;
   int sequence_touche[2]={0,0};
   int selection=0;
   int temp_difficulté=0;
@@ -101,10 +102,26 @@ int main(void) {
 
       // Fait descendre les objets toutes les 10 images
       // Permet de séparer le nombre d'images par secondes et la difficulté
-      if(i==20){
+      if(i==difficulté){
         
         p=mise_a_jour_objets(p,fréquence_Apparition,fréquence_Vitesse);
         p=verifier_collision(p, &gameOver);
+        i=0;
+
+        // Termine le jeu si le radeau est détruit
+        nb_radeaux=0;
+        for(int x=0;x<LARGEUR;x++){
+          if(p.grille[x][HAUTEUR-1]>=30)
+
+            nb_radeaux++;
+        }
+
+        if(nb_radeaux==0){
+          gameOver=1;
+          printf("\n\n\n\n\n\n\n\n\n\n Perdu\n");
+          break;
+        }
+        
         i=0;
       }
 
@@ -316,7 +333,7 @@ int main(void) {
             fréquence_Vitesse=15; // Chance qu'un Objet apparaisse avec une vitesse horizontalle
           }
 
-          // Difficulté Standard
+          // Difficulté Normale
           if(selection==1){
             
             difficulté=20;
@@ -407,7 +424,7 @@ int main(void) {
             fréquence_Vitesse=15; // Chance qu'un Objet apparaisse avec une vitesse horizontalle
           }
 
-          // Difficulté Standard
+          // Difficulté Normale
           if(selection==1){
             
             difficulté=20;
@@ -436,14 +453,15 @@ int main(void) {
           // Simulateur de pluie
           if(selection==3){
             
-            difficulté=5;
+            difficulté=1;
 
-            fréquence_Apparition[0]=3;
+            fréquence_Apparition[0]=2;
             fréquence_Apparition[1]=224;
             fréquence_Apparition[2]=248;
             fréquence_Apparition[3]=248;
 
             fréquence_Vitesse=116;
+            p.score=500;
           }
 
           i=0;
@@ -465,7 +483,7 @@ int main(void) {
 } 
 
 
-void affiche_jeu(struct jeu j,int jeu_en_pause){
+void affiche_jeu(struct jeu j, int jeu_en_pause){
 
   system("clear");
 
@@ -556,7 +574,7 @@ struct jeu déplacer(char direction, struct jeu j){
     return j;
   }
 
-  if(direction=='d' && j.position_radeau<LARGEUR-j.taille-2){
+  if(direction=='d' && j.position_radeau<LARGEUR-j.taille){
   
     for(int x=j.taille+j.position_radeau;x>=j.position_radeau;x--){
       
@@ -803,7 +821,7 @@ struct jeu mise_a_jour_objets(struct jeu j, int fréquence_Apparition[4],int fr�
   
   int bombe=rand()%fréquence_Apparition[1];
   
-  if(bombe == 1){
+  if(bombe==1){
 
     random_x=rand()%LARGEUR;
     
@@ -820,7 +838,7 @@ struct jeu mise_a_jour_objets(struct jeu j, int fréquence_Apparition[4],int fr�
   
   int bonus=rand()%fréquence_Apparition[2];
   
-  if(bonus == 1){
+  if(bonus==1){
 
     random_x=rand()%LARGEUR;
 
@@ -837,7 +855,7 @@ struct jeu mise_a_jour_objets(struct jeu j, int fréquence_Apparition[4],int fr�
   	
   int malus=rand()%fréquence_Apparition[3];
   
-  if(malus == 1){
+  if(malus==1){
 
     random_x=rand()%LARGEUR;
 
@@ -882,7 +900,15 @@ struct jeu verifier_collision(struct jeu j, int* gameOver){
           j.position_radeau=x;
           x=LARGEUR;
         }
-	  }    
+      
+      // Détermine la nouvelle taille du radeau
+      for(int x=LARGEUR-1;x>=0;x--)
+        if(j.grille[x][HAUTEUR-1]>=30){
+          
+          j.taille=x-j.position_radeau+1;
+          x=0;
+        }
+	  }
 	
 
     if(j.grille[x][HAUTEUR-1]==33){ // Bonus
@@ -1268,7 +1294,7 @@ struct jeu charge_partie(int numero_sauvegarde){
 
 // affichage du menu
 
-void affiche_menu(struct jeu j) {
+void affiche_menu(struct jeu j){
 	
   system("clear");
 
@@ -1301,7 +1327,6 @@ void affiche_menu(struct jeu j) {
 	printf("q: quitter le jeu\n");
 	printf("j: règle\n");
   printf("d: choix difficulté\n");
-	
 }
 
 void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
@@ -1365,18 +1390,18 @@ void affiche_menu_difficulté(int numero_difficulté){
   printf("Facile");
 
   if(numero_difficulté==0)
-    printf("*  ");
+    printf("  *");
   printf("\n");
 
 
-  // Difficumté Standard
+  // Difficumté Normale
   if(numero_difficulté==1)
     printf("*  ");
   
-  printf("Standard");
+  printf("Normale");
 
   if(numero_difficulté==1)
-    printf("*  ");
+    printf("  *");
   printf("\n");
 
   // Difficulté Difficile
@@ -1386,7 +1411,7 @@ void affiche_menu_difficulté(int numero_difficulté){
   printf("Difficile");
 
   if(numero_difficulté==2)
-    printf("*  ");
+    printf("  *");
   printf("\n\n\n");
 
   // Difficulté Simulateur de Pluie
@@ -1396,18 +1421,18 @@ void affiche_menu_difficulté(int numero_difficulté){
   printf("Simulateur de pluie");
 
   if(numero_difficulté==3)
-    printf("*  ");
+    printf("  *");
   printf("\n");
 }
 
 struct termios ancien_param;
 
-void restaurer_terminal() {
+void restaurer_terminal(){
     tcsetattr(STDIN_FILENO, TCSANOW, &ancien_param);
 }
 
 // Configuration du terminal pour lire les entrées sans appuyer sur Entrée
-void config_terminal() {
+void config_terminal(){
     struct termios nouveau_param;
     
     // Sauvegarde de la configuration actuelle du terminal
