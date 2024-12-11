@@ -42,7 +42,6 @@ struct jeu init_jeu(){
   for(int x=0; x<p.taille;x++){
     p.grille[LARGEUR/2-p.taille/2-1+x][HAUTEUR-1]=30;
   }
-  p.grille[6][HAUTEUR-3]=8;
   return p;
 }
 
@@ -55,43 +54,21 @@ int main(void) {
   void affiche_jeu(struct jeu,int);
   void affiche_menu(struct jeu);
   struct jeu déplacer(char direction, struct jeu);
-  struct jeu mise_a_jour_objets(struct jeu);
+  struct jeu mise_a_jour_objets(struct jeu, int[4], int);
   struct jeu verifier_collision(struct jeu, int*);
   void sauvegarde_partie(struct jeu, int);
   struct jeu charge_partie(int);
   void config_terminal();
   void affiche_menu_sauvegardes(int,int);
+  void affiche_menu_difficulté(int);
   
   config_terminal();
-/*
-  int rand=0;
-  for(int i=0;i<6;i++){
 
-    p=mise_a_jour_objets(p);
-    p=verifier_collision(p,&rand);
-    
-    for(int y=0;y<HAUTEUR;y++){
-      for(int x=0;x<LARGEUR;x++){
-        
-        if(p.grille[x][y]!=0)
-          printf(" %d ",p.grille[x][y]);
-        
-        else
-          printf("   ");
-      }
-      printf("\n");
-    }
-    printf("\n");
-    for(int x=0;x<LARGEUR;x++)
-      printf(" %d ",x);
-    printf("\n\tscore: %d",p.score);
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    sleep(1);
-  }
-*/
-  int mode=0; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
+  int mode=7; // Mode affiché (Jeu, Menu, Pause, Sélection Sauvegarde...)
   int gameOver=0;
   int difficulté;
+  int fréquence_Apparition[4];
+  int fréquence_Vitesse;
   int sequence_touche[2]={0,0};
   int selection=0;
   int temp_difficulté=0;
@@ -124,15 +101,15 @@ int main(void) {
 
       // Fait descendre les objets toutes les 10 images
       // Permet de séparer le nombre d'images par secondes et la difficulté
-      if(i==difficulté){ 
+      if(i==20){
         
-        p=mise_a_jour_objets(p);
+        p=mise_a_jour_objets(p,fréquence_Apparition,fréquence_Vitesse);
         p=verifier_collision(p, &gameOver);
         i=0;
       }
 
       // Augmente la difficulté avec le temps
-      if(temp_difficulté==6e7){
+      if(temp_difficulté==60000){
 
         if(difficulté>5)
           difficulté--;
@@ -158,6 +135,7 @@ int main(void) {
           p=déplacer(touche,p);
           mode=0;
           i=0;
+          temp_difficulté=0;
           continue;
         }
       }
@@ -183,11 +161,16 @@ int main(void) {
         
         if(touche=='r'){
           p=init_jeu();
-          mode=0;
+          mode=7;
           i=0;
+          temp_difficulté=0;
         }
+
         if(touche=='j')
         	mode=5;
+
+        if(touche=='d')
+          mode=6;
       }
 
       affiche_menu(p);
@@ -294,8 +277,183 @@ int main(void) {
       printf("Bienvenue dans le meilleur jeu que cette UE vous proposera, Le principe est simple, récolter le plus d'objets possible à l'aide de votre radeau (1 objet récolté= +1 point, 1 objet perdu = -1 point). Mais gare aux bombes (Q) ! En toucher une fera exploser une partie de votre radeau, créant un trou béant... Des malus et des bonus seront aussi attrapables. Un + recolté aggrandira la taille de votre radeau alors qu'un - le rétrécira. Attention à ne pas atteindre un score de -50 ou ce sera GAME OVER. Bon jeu à toi jeune pirate. De nouvelles mises à jour seront prochainement disposibles ! n'hésites pas à aider au bon développement du jeu en faisant un don à l'adresse Paypal suivante : benarclem@gmail.com ; Merci !");
       break;
     
-    case 6: // Sélection difficulté
+    case 6: // Sélection de la difficulté
 
+      // Montée et Descente
+      if(sequence_touche[0]==91 && sequence_touche[1]==65 && selection>=0){
+        
+        if(selection>0)
+          selection--;
+        
+        else
+          selection=3;
+      }
+      
+      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=3){
+        
+        if(selection<3)
+          selection++;
+        
+        else
+          selection=0;
+      }
+
+      // Sélectionne la difficulté
+      if(read(STDIN_FILENO,&touche,1)==1){
+
+        if(touche=='\n' || touche=='f'){
+
+          // Difficulté Facile
+          if(selection==0){
+            
+            difficulté=25; // Rapidité de la descente au début
+
+            fréquence_Apparition[0]=3; // Chance d'apparition d'un Objet
+            fréquence_Apparition[1]=24; // Chance d'apparition d'une Bombe
+            fréquence_Apparition[2]=48; // Chance d'apparition d'un Bonus
+            fréquence_Apparition[3]=48; // Chance d'apparition d'un Malus
+
+            fréquence_Vitesse=15; // Chance qu'un Objet apparaisse avec une vitesse horizontalle
+          }
+
+          // Difficulté Standard
+          if(selection==1){
+            
+            difficulté=20;
+
+            fréquence_Apparition[0]=3;
+            fréquence_Apparition[1]=24;
+            fréquence_Apparition[2]=48;
+            fréquence_Apparition[3]=48;
+
+            fréquence_Vitesse=10;
+          }
+
+          // Difficulté Difficile
+          if(selection==2){
+            
+            difficulté=20;
+
+            fréquence_Apparition[0]=6;
+            fréquence_Apparition[1]=12;
+            fréquence_Apparition[2]=48;
+            fréquence_Apparition[3]=24;
+
+            fréquence_Vitesse=7;
+          }
+
+          // Simulateur de pluie
+          if(selection==3){
+            
+            difficulté=5;
+
+            fréquence_Apparition[0]=3;
+            fréquence_Apparition[1]=224;
+            fréquence_Apparition[2]=248;
+            fréquence_Apparition[3]=248;
+
+            fréquence_Vitesse=116;
+          }
+
+          i=0;
+          temp_difficulté=0;
+          mode=0;
+        }
+        
+        if(touche=='m')
+          mode=2;
+      }
+
+      
+      affiche_menu_difficulté(selection);
+      break;
+    
+    case 7: // Sélection difficulté début de partie (Identique à la Sélection de difficulté sans le retour au menu)
+
+      // Montée et Descente
+      if(sequence_touche[0]==91 && sequence_touche[1]==65 && selection>=0){
+        
+        if(selection>0)
+          selection--;
+        
+        else
+          selection=3;
+      }
+      
+      if(sequence_touche[0]==91 && sequence_touche[1]==66 && selection<=3){
+        
+        if(selection<3)
+          selection++;
+        
+        else
+          selection=0;
+      }
+
+      // Sélectionne la difficulté
+      if(read(STDIN_FILENO,&touche,1)==1){
+
+        if(touche=='\n' || touche=='f'){
+
+          // Difficulté Facile
+          if(selection==0){
+            
+            difficulté=25; // Rapidité de la descente au début
+
+            fréquence_Apparition[0]=3; // Chance d'apparition d'un Objet
+            fréquence_Apparition[1]=24; // Chance d'apparition d'une Bombe
+            fréquence_Apparition[2]=48; // Chance d'apparition d'un Bonus
+            fréquence_Apparition[3]=48; // Chance d'apparition d'un Malus
+
+            fréquence_Vitesse=15; // Chance qu'un Objet apparaisse avec une vitesse horizontalle
+          }
+
+          // Difficulté Standard
+          if(selection==1){
+            
+            difficulté=20;
+
+            fréquence_Apparition[0]=3;
+            fréquence_Apparition[1]=24;
+            fréquence_Apparition[2]=48;
+            fréquence_Apparition[3]=48;
+
+            fréquence_Vitesse=10;
+          }
+
+          // Difficulté Difficile
+          if(selection==2){
+            
+            difficulté=20;
+
+            fréquence_Apparition[0]=6;
+            fréquence_Apparition[1]=12;
+            fréquence_Apparition[2]=48;
+            fréquence_Apparition[3]=24;
+
+            fréquence_Vitesse=7;
+          }
+
+          // Simulateur de pluie
+          if(selection==3){
+            
+            difficulté=5;
+
+            fréquence_Apparition[0]=3;
+            fréquence_Apparition[1]=224;
+            fréquence_Apparition[2]=248;
+            fréquence_Apparition[3]=248;
+
+            fréquence_Vitesse=116;
+          }
+
+          i=0;
+          temp_difficulté=0;
+          mode=0;
+        }
+      }
+
+      affiche_menu_difficulté(selection);
+      break;
     }
 
   sequence_touche[0]=sequence_touche[1];
@@ -309,10 +467,7 @@ int main(void) {
 
 void affiche_jeu(struct jeu j,int jeu_en_pause){
 
-  //system("clear");
-
-  if(jeu_en_pause==1)
-    printf("Appuyez sur a ou d pour Continuer\n\n\n");
+  system("clear");
 
   // Affiche le haut de la grille
   for(int i=0;i<LARGEUR+2;i++)
@@ -321,6 +476,10 @@ void affiche_jeu(struct jeu j,int jeu_en_pause){
   printf("\n");
   for(int y=0;y<HAUTEUR;y++) {
   
+    if(jeu_en_pause==1 && y==(int)(HAUTEUR/2))
+
+      printf("\nAppuyez sur A, D ou les flèches directionnelles pour reprendre la partie\n\n");
+
     // Affiche le bord gauche de la grille
     printf(" * ");
 
@@ -375,7 +534,7 @@ void affiche_jeu(struct jeu j,int jeu_en_pause){
     printf(" %d ",i);
   printf("\n");
 
-  printf("Score : %d\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",j.score);
+  printf("Score : %d",j.score);
 
   return;
 }
@@ -413,7 +572,7 @@ struct jeu déplacer(char direction, struct jeu j){
   }
 }
 
-struct jeu mise_a_jour_objets(struct jeu j){
+struct jeu mise_a_jour_objets(struct jeu j, int fréquence_Apparition[4],int fréquence_Vitesse){
 
   int cases[3];
 
@@ -621,8 +780,9 @@ struct jeu mise_a_jour_objets(struct jeu j){
   //----------------------------------------
 
   int vitesse_aléatoire=0;
-  int objet_aleatoire=rand()%3;
   int random_x=0;
+
+  int objet_aleatoire=rand()%fréquence_Apparition[0];
   
   if(objet_aleatoire==1){
     
@@ -630,7 +790,7 @@ struct jeu mise_a_jour_objets(struct jeu j){
     random_x=rand()%LARGEUR;
 
     // Donne une vitesse aléatoire à l'objet (1 ou 2 => Gauche ou droite; le reste => Pas de vitesse)
-    vitesse_aléatoire=rand()%5;
+    vitesse_aléatoire=rand()%fréquence_Vitesse;
 
     if(vitesse_aléatoire>2)
       vitesse_aléatoire=0;
@@ -641,13 +801,13 @@ struct jeu mise_a_jour_objets(struct jeu j){
     j.grille[random_x][0]=1+vitesse_aléatoire*10;
   }
   
-  int bombe=rand()%25;
+  int bombe=rand()%fréquence_Apparition[1];
   
   if(bombe == 1){
 
     random_x=rand()%LARGEUR;
     
-    vitesse_aléatoire=rand()%5;
+    vitesse_aléatoire=rand()%fréquence_Vitesse;
 
     if(vitesse_aléatoire>2)
       vitesse_aléatoire=0;
@@ -658,13 +818,13 @@ struct jeu mise_a_jour_objets(struct jeu j){
     j.grille[random_x][0]=2+vitesse_aléatoire*10;
   }
   
-  int bonus=rand()%50;
+  int bonus=rand()%fréquence_Apparition[2];
   
   if(bonus == 1){
 
     random_x=rand()%LARGEUR;
 
-    vitesse_aléatoire=rand()%5;
+    vitesse_aléatoire=rand()%fréquence_Vitesse;
 
     if(vitesse_aléatoire>2)
       vitesse_aléatoire=0;
@@ -675,13 +835,13 @@ struct jeu mise_a_jour_objets(struct jeu j){
   	j.grille[random_x][0]=3+vitesse_aléatoire*10;
   }
   	
-  int malus=rand()%60;
+  int malus=rand()%fréquence_Apparition[3];
   
   if(malus == 1){
 
     random_x=rand()%LARGEUR;
 
-    vitesse_aléatoire=rand()%5;
+    vitesse_aléatoire=rand()%fréquence_Vitesse;
 
     if(vitesse_aléatoire>2)
       vitesse_aléatoire=0;
@@ -1139,7 +1299,8 @@ void affiche_menu(struct jeu j) {
 	printf("c: charger la partie\n");
 	printf("r: recommencer une partie\n");
 	printf("q: quitter le jeu\n");
-	printf("j: règle");
+	printf("j: règle\n");
+  printf("d: choix difficulté\n");
 	
 }
 
@@ -1193,6 +1354,51 @@ void affiche_menu_sauvegardes(int numero_sauvegarde, int mode_sauvegarde){
   }
 }
 
+void affiche_menu_difficulté(int numero_difficulté){
+
+  system("clear");
+
+  // Difficulté Facile
+  if(numero_difficulté==0)
+    printf("*  ");
+  
+  printf("Facile");
+
+  if(numero_difficulté==0)
+    printf("*  ");
+  printf("\n");
+
+
+  // Difficumté Standard
+  if(numero_difficulté==1)
+    printf("*  ");
+  
+  printf("Standard");
+
+  if(numero_difficulté==1)
+    printf("*  ");
+  printf("\n");
+
+  // Difficulté Difficile
+  if(numero_difficulté==2)
+    printf("*  ");
+  
+  printf("Difficile");
+
+  if(numero_difficulté==2)
+    printf("*  ");
+  printf("\n\n\n");
+
+  // Difficulté Simulateur de Pluie
+  if(numero_difficulté==3)
+    printf("*  ");
+  
+  printf("Simulateur de pluie");
+
+  if(numero_difficulté==3)
+    printf("*  ");
+  printf("\n");
+}
 
 struct termios ancien_param;
 
